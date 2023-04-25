@@ -30,11 +30,18 @@ bool CSpectatorList::GetSpectators(CBaseEntity* pLocal)
 				default: continue;
 			}
 
+			float respawnTime = 0;
+			if (CTFPlayerResource* pResource = g_EntityCache.GetPR())
+			{
+				const float NextRespawnTime = pResource->GetNextRespawnTime(pTeammate->GetIndex()) - I::GlobalVars->curtime;
+				respawnTime = std::clamp(NextRespawnTime, 0.0f, 1000.0f); //the 1000 is abitrary, i only did this to clamp it so it doesnt go below 0
+			}
+
 			PlayerInfo_t playerInfo{ };
 			if (I::EngineClient->GetPlayerInfo(pTeammate->GetIndex(), &playerInfo))
 			{
 				Spectators.push_back({
-					Utils::ConvertUtf8ToWide(playerInfo.name), szMode, g_EntityCache.IsFriend(pTeammate->GetIndex()),
+					Utils::ConvertUtf8ToWide(playerInfo.name), szMode, respawnTime, g_EntityCache.IsFriend(pTeammate->GetIndex()),
 					pTeammate->GetTeamNum(), pTeammate->GetIndex()
 									 });
 			}
@@ -109,7 +116,7 @@ void CSpectatorList::DrawDefault()
 	g_Draw.String(FONT_MENU,
 				  SpecListX + (SpecListW / 2),
 				  SpecListY + (SpecListTitleBarH / 2),
-				  Vars::Menu::Colors::MenuAccent,
+				  Vars::Menu::MenuAccent,
 				  ALIGN_CENTER,
 				  "%hs", "Spectators");
 
@@ -152,24 +159,24 @@ void CSpectatorList::DrawClassic()
 
 		int nDrawY = (g_ScreenSize.h / 2) - 300;
 		const int centerr = g_ScreenSize.c;
-		const int addyy = g_Draw.m_vecFonts[FONT_ESP_NAME].nTall;
+		const int addyy = g_Draw.m_vecFonts[FONT_MENU].nTall;
 
 		g_Draw.String(
-			FONT_ESP_NAME,
+			FONT_MENU,
 			centerr, nDrawY - addyy,
 			{ 255, 255, 255, 255 },
 			ALIGN_CENTERHORIZONTAL,
-			L"Spectating you");
+			L"Spectating You:");
 
 		for (const auto& Spectator : Spectators)
 		{
 			int nDrawX = g_ScreenSize.c;
 
 			int w, h;
-			I::VGuiSurface->GetTextSize(g_Draw.m_vecFonts[FONT_ESP_NAME].dwFont,
-										(Spectator.Mode + Spectator.Name).c_str(), w, h);
+			I::VGuiSurface->GetTextSize(g_Draw.m_vecFonts[FONT_MENU].dwFont,
+										(Spectator.Mode + Spectator.Name + std::to_wstring(Spectator.RespawnTime)).c_str(), w, h);
 
-			const int nAddY = g_Draw.m_vecFonts[FONT_ESP_NAME].nTall;
+			const int nAddY = g_Draw.m_vecFonts[FONT_MENU].nTall;
 			if (Vars::Visuals::SpectatorList.Value == 3)
 			{
 				PlayerInfo_t pi{};
@@ -181,13 +188,13 @@ void CSpectatorList::DrawClassic()
 			}
 
 			g_Draw.String(
-				FONT_ESP_NAME,
+				FONT_MENU,
 				nDrawX, nDrawY,
 				Spectator.IsFriend
 				? Colors::Friend
 				: Utils::GetTeamColor(Spectator.Team, Vars::ESP::Main::EnableTeamEnemyColors.Value),
 				ALIGN_CENTERHORIZONTAL,
-				L"[%ls] %ls", Spectator.Mode.data(), Spectator.Name.data());
+				L"[%ls] %ls (%.1fs)", Spectator.Mode.data(), Spectator.Name.data(), Spectator.RespawnTime);
 
 			nDrawY += nAddY;
 		}

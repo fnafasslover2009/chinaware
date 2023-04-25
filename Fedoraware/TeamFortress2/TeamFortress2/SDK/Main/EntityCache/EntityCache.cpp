@@ -134,13 +134,20 @@ void CEntityCache::Fill()
 				{
 					m_vecGroups[EGroupType::WORLD_PROJECTILES].push_back(pEntity);
 
-					if (nClassID == ETFClassID::CTFGrenadePipebombProjectile && pEntity->GetPipebombType() == TYPE_STICKY)
+					if (nClassID == ETFClassID::CTFGrenadePipebombProjectile && (pEntity->GetPipebombType() == TYPE_STICKY || pEntity->GetPipebombPulsed()))
 					{
-						if (I::ClientEntityList->GetClientEntityFromHandle(reinterpret_cast<int>(pEntity->GetThrower())) == m_pLocal)
+						CBaseEntity* pThrower = I::ClientEntityList->GetClientEntityFromHandle(reinterpret_cast<int>(pEntity->GetThrower()));
+						CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->GethOwner());
+						if (pThrower == m_pLocal || pOwner == m_pLocal)
 						{
 							m_vecGroups[EGroupType::LOCAL_STICKIES].push_back(pEntity);
 						}
-
+#ifdef DEBUG
+						Utils::ConLog("EntityCache", tfm::format("\npEntity : %p\npLocal : %p\n\n", pEntity, m_pLocal).c_str(), { 104, 235, 255, 255 });
+						if (!pOwner || !pThrower) { break; }
+						if (pThrower == m_pLocal || pOwner == m_pLocal) { break; }
+						Utils::ConLog("EntityCache", tfm::format("\npLocal : %p\npLocalWeapon : %p\npThrower : %p\npOwner : %p\n\n", m_pLocal, m_pLocalWeapon, pThrower, pOwner).c_str(), { 104, 235, 255, 255 });
+#endif
 						break;
 					}
 
@@ -212,16 +219,12 @@ void CEntityCache::UpdateFriends()
 	static size_t CurSize, OldSize;
 	const auto Players = GetGroup(EGroupType::PLAYERS_ALL);
 	CurSize = Players.size();
+
 	if (CurSize != OldSize)
 	{
-		friends = 0;
-        uint_fast64_t mask;
-        bool flag;
 		for (const auto& Player : Players)
 		{
-             mask = (uint_fast64_t)2 << Player->GetIndex();
-             flag = IsPlayerOnSteamFriendList(Player);
-             friends = (friends & ~mask) | (-flag & mask);
+			Friends[Player->GetIndex()] = IsPlayerOnSteamFriendList(Player);
 		}
 	}
 
@@ -234,7 +237,6 @@ void CEntityCache::Clear()
 	m_pLocalWeapon = nullptr;
 	m_pObservedTarget = nullptr;
 	m_pPlayerResource = nullptr;
-	friends = 0;
 
 	for (auto& Group : m_vecGroups)
 	{
@@ -242,6 +244,14 @@ void CEntityCache::Clear()
 	}
 }
 
+bool CEntityCache::IsFriend(int entIdx)
+{
+	if (entIdx < 0 || entIdx >= 129)
+	{
+		return false;
+	}
+	return Friends[entIdx];
+}
 
 const std::vector<CBaseEntity*>& CEntityCache::GetGroup(const EGroupType& Group)
 {

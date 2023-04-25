@@ -1,6 +1,8 @@
 #include "../Hooks.h"
 
 #include "../../Features/Visuals/Visuals.h"
+#include "../../Features/Chams/DMEChams.h"
+#include "../../Features/Glow/Glow.h"
 #include "../../Features/Backtrack/Backtrack.h"
 #include "../../Features/TickHandler/TickHandler.h"
 #include "../../Features/AntiHack/CheaterDetection/CheaterDetection.h"
@@ -13,7 +15,9 @@ MAKE_HOOK(ViewRender_LevelInit, Utils::GetVFuncPtr(I::ViewRender, 1), void, __fa
 {
 	F::Visuals.StoreMaterialHandles();
 	F::Visuals.OverrideWorldTextures();
-	F::Statistics.Clear();
+	
+	F::DMEChams.CreateMaterials();
+	F::Glow.CreateMaterials();
 
 	F::Backtrack.Restart();
 	F::Ticks.Reset();

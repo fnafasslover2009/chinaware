@@ -51,14 +51,23 @@ bool CCheaterDetection::ShouldScanEntity(CBaseEntity* pEntity)
 	PlayerInfo_t pInfo{};
 	if (!I::EngineClient->GetPlayerInfo(iIndex, &pInfo)) { return false; }
 
-	// dont scan ignored players, friends, or players already marked as cheaters
-	switch (G::PlayerPriority[pInfo.friendsID].Mode)
+	// dont scan friends, or players already marked as cheaters
+	switch (G::PlayerPriority[pInfo.friendsID].Mode) 
 	{
-		case 0: case 1: case 4:
-		{ return false; }
+		case 0:
+		case 4:
+		return false;
+	}
+	if(g_EntityCache.IsFriend(pEntity->GetIndex())) //first check only gets based off of playerlist, so do another check for steam friends
+	{
+		return false;
 	}
 
-	if (!mData[pEntity].flJoinTime) { mData[pEntity].flJoinTime = I::GlobalVars->curtime; return false; }
+	if (!mData[pEntity].flJoinTime) 
+	{ 
+		mData[pEntity].flJoinTime = I::GlobalVars->curtime; 
+		return false; 
+	}
 
 	return true;
 }
@@ -122,7 +131,7 @@ void CCheaterDetection::AimbotCheck(CBaseEntity* pEntity)
 	const Vec3 vCurAngle = pEntity->GetEyeAngles();
 	const float flDeltaX = RAD2DEG(Math::AngleDiffRad(DEG2RAD(vCurAngle.x), DEG2RAD(mData[pEntity].vLastAngle.x)));
 	const float flDeltaY = RAD2DEG(Math::AngleDiffRad(DEG2RAD(vCurAngle.y), DEG2RAD(mData[pEntity].vLastAngle.y)));
-	const float flDelta  = sqrtf(pow(flDeltaX, 2) + pow(flDeltaY, 2));
+	const float flDelta = sqrtf(pow(flDeltaX, 2) + pow(flDeltaY, 2));
 	const float flScaled = std::clamp(flDelta * G::ChokeMap[pEntity->GetIndex()], 0.f, Vars::Misc::CheaterDetection::MaxScaledAimbotFoV.Value);	//	aimbot flick scaled
 
 	if (flScaled > Vars::Misc::CheaterDetection::MinimumAimbotFoV.Value)
@@ -178,7 +187,7 @@ void CCheaterDetection::BacktrackCheck(CGameEvent* pEvent) {
 
 	const Vec3 vTraceStart = vEyePos;									  //
 	const Vec3 vTraceEnd = (vTraceStart + (vForward * 8192.0f));		  //
-																		  //
+	//
 	CGameTrace trace = {};												  //
 	CTraceFilterHitscan filter = {};									  //
 	filter.pSkip = pAttacker;											  //
@@ -287,7 +296,10 @@ void CCheaterDetection::FillServerInfo()
 	server.flAverageScorePerSecond = 0.f;
 	server.iTickRate = 1.f / I::GlobalVars->interval_per_tick;
 	server.flMultiplier = 66.7 / server.iTickRate;
-	Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated server tickrate & created appropriate multiplier {%.1f | %.1f}.", server.iTickRate, server.flMultiplier).c_str(), { 224, 255, 131, 255 });
+	if (Vars::Debug::DebugInfo.Value)
+	{
+		Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated server tickrate & created appropriate multiplier {%.1f | %.1f}.", server.iTickRate, server.flMultiplier).c_str(), { 224, 255, 131, 255 });
+	}
 }
 
 void CCheaterDetection::FindScores()
@@ -311,7 +323,10 @@ void CCheaterDetection::FindScores()
 
 	// now that we've gone through all players (including local) find the avg
 	server.flAverageScorePerSecond = (flTotalAvg / (float)iTotalPlayers);
-	Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated avg. server score per second at %.1f.", server.flAverageScorePerSecond).c_str(), { 224, 255, 131, 255 });
+	if (Vars::Debug::DebugInfo.Value)
+	{
+		Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated avg. server score per second at %.1f.", server.flAverageScorePerSecond).c_str(), { 224, 255, 131, 255 });
+	}
 }
 
 void CCheaterDetection::FindHitchances()
@@ -322,7 +337,10 @@ void CCheaterDetection::FindHitchances()
 	const float flAvg = (float)server.iHits / (float)server.iMisses;
 	server.flHighAccuracy = std::clamp(flAvg * 2, .001f, .95f);
 
-	Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated server hitchance data {%.5f | %.5f}", flAvg, server.flHighAccuracy).c_str(), { 224, 255, 131, 255 });
+	if (Vars::Debug::DebugInfo.Value)
+	{
+		Utils::ConLog("CheaterDetection[UTIL]", tfm::format("Calculated server hitchance data {%.5f | %.5f}", flAvg, server.flHighAccuracy).c_str(), { 224, 255, 131, 255 });
+	}
 }
 
 void CCheaterDetection::Reset()
@@ -366,7 +384,7 @@ void CCheaterDetection::ReportDamage(CGameEvent* pEvent)
 	if (!pEntity) { return; }
 	if (pEntity->GetDormant()) { return; }
 	CBaseCombatWeapon* pWeapon = pEntity->GetActiveWeapon();
-	if (!pWeapon) { return; }
+	if ( !pWeapon ) { return; }
 	AimbotCheck(pEntity);
 	//BacktrackCheck(pEvent);
 	if (I::GlobalVars->tickcount - mData[pEntity].iLastDamageEventTick <= 1) { return; }

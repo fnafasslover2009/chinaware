@@ -116,11 +116,6 @@ void CPlayerArrows::Run()
 				continue;
 			}
 
-			if (Vars::Visuals::SpyWarningIgnoreFriends.Value && g_EntityCache.IsFriend(pEnemy->GetIndex()))
-			{
-				continue;
-			}
-
 			Vec3 vEnemyPos = pEnemy->GetWorldSpaceCenter();
 			Vec3 vScreen;
 

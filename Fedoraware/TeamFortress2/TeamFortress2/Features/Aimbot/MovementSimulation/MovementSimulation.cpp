@@ -1,5 +1,7 @@
 #include "MovementSimulation.h"
 #include "../../Backtrack/Backtrack.h"
+#pragma warning (disable : 4018)
+#pragma warning (disable : 4552)
 
 //we'll use this to set current player's command, without it CGameMovement::CheckInterval will try to access a nullptr
 static CUserCmd DummyCmd = {};
@@ -127,10 +129,10 @@ bool CMovementSimulation::Initialize(CBaseEntity* pPlayer)
 			pPlayer->m_bInDuckJump() = false;
 		}
 
-		if (pPlayer != g_EntityCache.GetLocal())
-		{
-			pPlayer->m_hGroundEntity() = -1; //without this nonlocal players get snapped to the floor
-		}
+		//if (pPlayer != g_EntityCache.GetLocal())
+		//{
+		//	pPlayer->m_hGroundEntity() = -1; //this is bs you don't need this
+		//} 
 
 		pPlayer->m_flModelScale() -= 0.03125f; //fixes issues with corners
 
@@ -191,17 +193,12 @@ void CMovementSimulation::FillVelocities()
 				continue;
 			}
 
-			if (G::ChokeMap[pEntity->GetIndex()]) {	//	dont recache the same angle for lagging players.
-				continue;
-			}
+			//if (G::ChokeMap[pEntity->GetIndex()]) {	//	dont recache the same angle for lagging players. WHY? JUST WHY
+			//	continue;
+			//}
 
 			const Vec3 vVelocity = pEntity->GetVelocity();
 			m_Velocities[iEntIndex].push_front(vVelocity);
-
-			while (m_Velocities[iEntIndex].size() > Vars::Aimbot::Projectile::StrafePredictionSamples.Value)
-			{
-				m_Velocities[iEntIndex].pop_back();
-			}
 		}
 	}
 	else
@@ -209,32 +206,6 @@ void CMovementSimulation::FillVelocities()
 		m_Velocities.clear();
 	}
 }
-
-
-// This hook lets you freeze where your camera is in place, so you can do +right and +forward with a bot to make it walk in a circle
-// Credits: spook953
-//#include "../../../Hooks/Hooks.h"
-//
-//MAKE_HOOK(C_BasePlayer_CalcPlayerView, g_Pattern.Find(L"client.dll", L"55 8B EC 83 EC 18 53 56 8B F1 8B 0D ? ? ? ? 57 8B 01 8B 40 38 FF D0 84 C0 75 0B 8B 0D ? ? ? ? 8B 01 FF 50 4C 8B 06 8D 4D E8 51 8B CE FF 90"), void, __fastcall,
-//		  void* ecx, void* edx, Vector& eyeOrigin, Vector& eyeAngles, float& fov)
-//{
-//	static Vector vFrozenOrigin{};
-//	static Vector vFrozenAngle{};
-//	static bool bFreezePlayerView = false;
-//	if (GetAsyncKeyState(VK_R) & 0x1)
-//	{
-//		vFrozenOrigin = eyeOrigin;
-//		vFrozenAngle = eyeAngles;
-//		bFreezePlayerView = !bFreezePlayerView;
-//	}
-//
-//	if (bFreezePlayerView)
-//	{
-//		return Hook.Original<FN>()(ecx, edx, vFrozenOrigin, vFrozenAngle, fov);
-//	}
-//
-//	Hook.Original<FN>()(ecx, edx, eyeOrigin, eyeAngles, fov);
-//}
 
 bool CMovementSimulation::StrafePrediction()
 {
@@ -265,8 +236,7 @@ bool CMovementSimulation::StrafePrediction()
 
 		if (static_cast<int>(mVelocityRecord.size()) < 1)
 		{ return false; }
-
-		const int iSamples = fmin(Vars::Aimbot::Projectile::StrafePredictionSamples.Value, mVelocityRecord.size());
+		const int iSamples = fmin(15, mVelocityRecord.size());
 		if (!iSamples) { return false; }
 
 		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
@@ -285,8 +255,9 @@ bool CMovementSimulation::StrafePrediction()
 
 		flAverageYaw /= i;
 
-		while (flAverageYaw > 360.f) { flAverageYaw -= 360.f; }
-		while (flAverageYaw < -360.f) { flAverageYaw += 360.f; }
+		//while (flAverageYaw > 360.f) { flAverageYaw -= 360.f; }
+		//while (flAverageYaw < -360.f) { flAverageYaw += 360.f; } just no
+		 fmod(flAverageYaw + 180.0f, 360.0f) - 180.0f;
 
 		if (fabsf(flAverageYaw) < Vars::Aimbot::Projectile::StrafePredictionMinDifference.Value)
 		{
@@ -294,8 +265,21 @@ bool CMovementSimulation::StrafePrediction()
 			return false;
 		}
 
-		const float flMaxDelta = (60.f / fmaxf((float)iSamples / 2.f, 1.f));
+		auto get_velocity_degree = [](float velocity)
+		{
+			auto tmp = RAD2DEG(atan(30.0f / velocity));
 
+			#define CheckIfNonValidNumber(x) (fpclassify(x) == FP_INFINITE || fpclassify(x) == FP_NAN || fpclassify(x) == FP_SUBNORMAL)
+			if (CheckIfNonValidNumber(tmp) || tmp > 90.0f)
+				return 90.0f;
+
+			else if (tmp < 0.0f)
+				return 0.0f;
+			else
+				return tmp;
+		};
+
+		const float flMaxDelta = (get_velocity_degree(flAverageYaw) / fmaxf((float)iSamples, 2.f));
 
 		if (fabsf(flAverageYaw) > flMaxDelta) {
 			m_Velocities[m_pPlayer->GetIndex()].clear();

@@ -36,34 +36,6 @@ public: //Netvars
 		NETVAR(m_iPrimaryAmmoType, int, "CBaseCombatWeapon", "m_iPrimaryAmmoType");
 	NETVAR(m_flNextPrimaryAttack, float, "CBaseCombatWeapon", "m_flNextPrimaryAttack")
 
-
-		// pretty srue these are all wrong but i have no idea how to do the thing to find out what they are
-	// you add 1c idiot
-	/*
-			*(float*)((uintptr_t)pWeapon + 0xA54) = crit_bucket;
-	*(unsigned int*)((uintptr_t)pWeapon + 0xB58) = weapon_seed;
-	*(unsigned int*)((uintptr_t)pWeapon + 0xB4c) = unknown1;
-	*(unsigned int*)((uintptr_t)pWeapon + 0xB50) = unknown2;
-	*(bool*)((uintptr_t)pWeapon + 0xB33) = unknown3;
-	*(float*)((uintptr_t)pWeapon + 0xB5c) = unknown4;
-	*(int*)((uintptr_t)pWeapon + 0xA58) = crit_attempts;
-	*(int*)((uintptr_t)pWeapon + 0xA5c) = crit_count;
-	*(float*)((uintptr_t)pWeapon + 0xC18) = observed_crit_chance;
-	*(bool*)((uintptr_t)pWeapon + 0xB34) = unknown7;
-	*//*
-	M_OFFSETGET(WeaponSeed, int, 0xB58)
-	M_OFFSETGET(Unknown1, int, 0xB4C)
-	M_OFFSETGET(Unknown2, int, 0xB50)
-	M_OFFSETGET(Unknown3, bool, 0xB33)
-	M_OFFSETGET(Unknown4, float, 0xB5C)
-	M_OFFSETGET(CritAttempts, int, 0xA58)
-	M_OFFSETGET(CritCount, int, 0xA5C)
-	M_OFFSETGET(ObservedCritChance, int, 0xC18)
-	M_OFFSETGET(Unknown7, bool, 0xB34)
-	M_OFFSETGET(WeaponMode, bool, 0xB20)
-	M_OFFSETGET(WeaponDataa, bool, 0xB2C)*/
-
-
 public: //Virtuals
 	M_VIRTUALGET(WeaponID, int, this, int(__thiscall*)(void*), 381)
 		M_VIRTUALGET(Slot, int, this, int(__thiscall*)(void*), 330)
@@ -110,7 +82,7 @@ public: //Everything else, lol
 
 		static auto C_EconItemView_GetStaticData = reinterpret_cast<void* (__thiscall*)(void*)>(
 			g_Pattern.Find(L"client.dll", L"0F B7 41 24 50 E8 ? ? ? ? 8B C8 E8 ? ? ? ? 6A 00 68 ? ? ? ? 68 ? ? ? ? 6A 00 50 E8 ? ? ? ? 83 C4 14 C3")
-			);
+			); 
 
 		void* pItem = m_Item();
 
@@ -188,7 +160,7 @@ public: //Everything else, lol
 	}
 
 	__inline CTFWeaponInfo* GetTFWeaponInfo()
-	{
+	{ //this sig is outdated, so it shoots with jumper weapons even though its not supposed to
 		static int GetTFWeaponInfoFNOffset = g_Pattern.Find(L"client.dll", L"55 8B EC FF 75 08 E8 ? ? ? ? 83 C4 04 85 C0 75 02 5D C3 56 50 E8 ? ? ? ? 83 C4 04 0F B7 F0 E8 ? ? ? ? 66 3B F0 75 05 33 C0 5E 5D C3");
 		static auto GetTFWeaponInfoFN = reinterpret_cast<CTFWeaponInfo * (__cdecl*)(int)>(GetTFWeaponInfoFNOffset);
 		return GetTFWeaponInfoFN(GetWeaponID());
@@ -381,13 +353,13 @@ public: //Everything else, lol
 	__inline bool CalcIsAttackCriticalHelperNoCrits(CBaseEntity* pWeapon)
 	{
 		typedef bool (*fn_t)(CBaseEntity*);
-		return GetVFunc<fn_t>(pWeapon, 463, 0)(pWeapon);
+		return GetVFunc<fn_t>(pWeapon, 464, 0)(pWeapon);
 	}
 
 	//__inline bool CanFireCriticalShot(CBaseEntity* pWeapon)		// this does not fucking work no matter what i do and i have no idea why :DDD
 	//{
 	//	typedef bool (*fn_t)(CBaseEntity*, bool, CBaseEntity*);
-	//	return GetVFunc<fn_t>(this, 491)(pWeapon, false, nullptr);
+	//	return GetVFunc<fn_t>(this, 492)(pWeapon, false, nullptr);
 	//}
 
 	__inline Vec3 GetSpreadAngles()
@@ -435,6 +407,6 @@ class CTFWeaponInvis : public CBaseCombatWeapon
 public:
 	__inline bool HasFeignDeath()
 	{
-		return static_cast<bool>(GetVFunc<bool(__thiscall*)(CTFWeaponInvis*)>(this, 522));
+		return static_cast<bool>(GetVFunc<bool(__thiscall*)(CTFWeaponInvis*)>(this, 523));
 	}
 };

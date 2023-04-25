@@ -113,4 +113,60 @@ namespace G
 	{
 		return PlayerPriority[friendsID].Mode > 2;
 	}
+
+	inline void SwitchIgnore(uint32_t playerID) //this code is so fucking shitty
+	{
+		bool ignore = true;
+		bool unignore = false;
+
+		if (PlayerPriority[playerID].Mode > 1)
+		{
+			ignore = true;
+			unignore = false;
+		}
+		else if (PlayerPriority[playerID].Mode == 1)
+		{
+			ignore = false;
+			unignore = true;
+		}
+
+		if (ignore == true)
+		{
+			PlayerPriority[playerID].Mode = 1;
+		}
+		else if (unignore == true)
+		{
+			PlayerPriority[playerID].Mode = 2;
+		}
+	}
+
+	inline void SwitchMark(uint32_t playerID)
+	{
+		bool Mark = true;
+		bool Unmark = false;
+
+		if (PlayerPriority[playerID].Mode != 4)
+		{
+			Mark = true;
+			Unmark = false;
+		}
+		else if (PlayerPriority[playerID].Mode == 4)
+		{
+			Mark = false;
+			Unmark = true;
+		}
+
+		if (Mark == true)
+		{
+			PlayerPriority[playerID].Mode = 4;
+			Mark = false;
+			Unmark = true;
+		}
+		else if (Unmark == true)
+		{
+			PlayerPriority[playerID].Mode = 2;
+			Mark = true;
+			Unmark = false;
+		}
+	}
 };

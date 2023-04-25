@@ -12,7 +12,9 @@ enum struct ETargetType
 {
 	UNKNOWN,
 	PLAYER,
-	BUILDING,
+	SENTRY,
+	DISPENSER,
+	TELEPORTER,
 	STICKY,
 	NPC,
 	BOMBS
@@ -22,6 +24,17 @@ enum struct ESortMethod
 {
 	FOV,
 	DISTANCE
+};
+
+enum ToAimAt
+{
+	PLAYER = 1 << 0,
+	SENTRY = 1 << 1,
+	DISPENSER = 1 << 2,
+	TELEPORTER = 1 << 3,
+	STICKY = 1 << 4,
+	NPC = 1 << 5,
+	BOMB = 1 << 6
 };
 
 enum Ignored

@@ -174,4 +174,11 @@ public:
 		static auto offset = g_NetVars.get_offset("DT_TFPlayerResource", "m_flConnectTime");
 		return *reinterpret_cast<float*>(this + offset + 4 * idx);
 	}
+
+	float GetNextRespawnTime(int idx)
+	{
+		if (!this) { return 0.f; }
+		static auto offset = g_NetVars.get_offset("DT_TFPlayerResource", "m_flNextRespawnTime");
+		return *reinterpret_cast<float*>(this + offset + 4 * idx);
+	}
 };

@@ -39,7 +39,6 @@ public:
 
 	void DrawOnScreenConditions(CBaseEntity* pLocal);
 	void DrawOnScreenPing(CBaseEntity* pLocal);
-	void ScopeLines(CBaseEntity* pLocal);
 	void SkyboxChanger();
 	void BulletTrace(CBaseEntity* pEntity, Color_t color);
 	void DrawAimbotFOV(CBaseEntity* pLocal);
@@ -47,14 +46,11 @@ public:
 	void DrawAntiAim(CBaseEntity* pLocal);
 	void DrawTickbaseInfo(CBaseEntity* pLocal);
 	void DrawMenuSnow();
-	void DrawDVD();
-	void DrawPredictionLine();
 	void DrawMovesimLine();
 	void ManualNetwork(const StartSoundParams_t& params); // Credits: reestart
 	void RenderLine(const Vector& v1, const Vector& v2, Color_t c, bool bZBuffer);
 	void DrawSightlines();
 	void FillSightlines();
-	void SetVisionFlags();
 	void AddBulletTracer(const Vec3& vFrom, const Vec3& vTo, const Color_t& clr);
 	void PruneBulletTracers();
 	void DrawBulletTracers();
@@ -67,18 +63,6 @@ public:
 	float arrowRight = 0.f;
 
 	std::array<Sightline_t, 64> m_SightLines;
-
-	class CPrecipitation
-	{
-	private:
-		CBaseEntity* RainEntity = nullptr;
-		IClientNetworkable* RainNetworkable = nullptr;
-		CClientClass* GetPrecipitationClass();
-	public:
-		void Run();
-		void Cleanup();
-	};
-	CPrecipitation rain;
 
 	struct PickupData
 	{
@@ -108,37 +92,6 @@ public:
 
 	void StoreMaterialHandles();
 	void ClearMaterialHandles();
-
-
-};
-
-class CRunescapeChat
-{
-	enum EChatColour
-	{
-		eRS_YELLOW,
-		eRS_RED,
-		eRS_GREEN,
-		eRS_CYAN,
-		eRS_PURPLE,
-		eRS_WHITE
-	};
-
-	struct Chat_t
-	{
-		CBaseEntity* m_pEntity = nullptr;
-		float m_flTimeCreated;
-		int m_nOffset;
-		EChatColour m_Colour;
-		std::wstring m_szChatText;
-	};
-
-	std::deque<Chat_t> m_vecChats;
-public:
-	void Draw();
-	void PushChat(CBaseEntity* pEntity, std::wstring szChatText);
 };
 
 ADD_FEATURE(CVisuals, Visuals)
-
-ADD_FEATURE(CRunescapeChat, RSChat);

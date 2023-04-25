@@ -18,37 +18,19 @@ void CMisc::RunPre(CUserCmd* pCmd, bool* pSendPacket)
 		FastStop(pCmd, pLocal);
 		StopMovement(pCmd, pSendPacket);
 		FastDeltaMove(pCmd, pSendPacket);
-		//PrintProjAngles(pLocal);
 		AccurateMovement(pCmd, pLocal);
 		FastAccel(pCmd, pLocal, pSendPacket);
 		AutoJump(pCmd, pLocal);
 		AutoStrafe(pCmd, pLocal);
-		NoiseMakerSpam(pLocal);
-		ExtendFreeze(pLocal);
-		Freecam(pCmd, pLocal);
-		RageRetry(pLocal);
 		AntiBackstab(pLocal, pCmd);
-		ViewmodelFlip(pCmd, pLocal);
 		AutoPeek(pCmd, pLocal);
-		StickySpam(pLocal, pCmd);
-		Glutton(pLocal, pCmd);
 	}
 
 	AntiAFK(pCmd);
-	ChatSpam();
 	CheatsBypass();
 	PingReducer();
 	WeaponSway();
 	DetectChoke();
-}
-
-void CMisc::RunMid(CUserCmd* pCmd, const int nOldGroundEnt)
-{
-	if (const auto& pLocal = g_EntityCache.GetLocal())
-	{
-		EdgeJump(pLocal, pCmd, nOldGroundEnt);
-		DuckJump(pLocal, pCmd);
-	}
 }
 
 void CMisc::RunPost(CUserCmd* pCmd, bool* pSendPacket)
@@ -57,8 +39,6 @@ void CMisc::RunPost(CUserCmd* pCmd, bool* pSendPacket)
 	{
 		DoubletapPacket(pSendPacket);
 		LegJitter(pCmd, pLocal);
-		AutoRocketJump(pCmd, pLocal);
-		AutoScoutJump(pCmd, pLocal);
 		ChokeCheck(pSendPacket);
 	}
 }
@@ -152,8 +132,7 @@ void CMisc::WeaponSway()
 {
 	static ConVar* cl_wpn_sway_interp = g_ConVars.FindVar("cl_wpn_sway_interp");
 	static ConVar* cl_wpn_sway_scale = g_ConVars.FindVar("cl_wpn_sway_scale");
-	if (cl_wpn_sway_interp || cl_wpn_sway_scale)
-	{
+	if (cl_wpn_sway_interp)
 	{
 		if (Vars::Visuals::ViewmodelSway.Value)
 		{
@@ -164,7 +143,6 @@ void CMisc::WeaponSway()
 		{
 				cl_wpn_sway_interp->SetValue(0.0f);
 				cl_wpn_sway_scale->SetValue(0.0f);
-		}
 		}
 	}
 }
@@ -339,145 +317,6 @@ void CMisc::PingReducer()
 	}
 }
 
-void CMisc::ExtendFreeze(CBaseEntity* pLocal)
-{
-	if (Vars::Misc::ExtendFreeze.Value && I::EngineClient->IsInGame() && !pLocal->IsAlive())
-	{
-		static Timer cmdTimer{};
-		if (cmdTimer.Run(2000))
-		{
-			I::EngineClient->ClientCmd_Unrestricted("extendfreeze");
-		}
-	}
-}
-
-void CMisc::Freecam(CUserCmd* pCmd, CBaseEntity* pLocal)
-{
-	static KeyHelper fcKey{ &Vars::Visuals::FreecamKey.Value };
-	if (fcKey.Down())
-	{
-		if (G::FreecamActive == false)
-		{
-			G::FreecamPos = pLocal->GetVecOrigin();
-			G::FreecamActive = true;
-		}
-
-		const Vec3 viewAngles = I::EngineClient->GetViewAngles();
-		const float zMove = sinf(DEG2RAD(viewAngles.x));
-		Vec3 vForward, vRight, vUp;
-		Math::AngleVectors(viewAngles, &vForward, &vRight, &vUp);
-		Vec3 moveVector;
-
-		if (pCmd->buttons & IN_FORWARD)
-		{
-			moveVector += vForward;
-			moveVector.z -= zMove;
-		}
-
-		if (pCmd->buttons & IN_BACK)
-		{
-			moveVector -= vForward;
-			moveVector.z += zMove;
-		}
-
-		if (pCmd->buttons & IN_MOVELEFT)
-		{
-			moveVector -= vRight;
-		}
-
-		if (pCmd->buttons & IN_MOVERIGHT)
-		{
-			moveVector += vRight;
-		}
-
-		Math::VectorNormalize(moveVector);
-		moveVector *= Vars::Visuals::FreecamSpeed.Value;
-		G::FreecamPos += moveVector;
-
-		pCmd->buttons = 0;
-		pCmd->forwardmove = 0.f;
-		pCmd->sidemove = 0.f;
-		pCmd->upmove = 0.f;
-	}
-	else
-	{
-		G::FreecamActive = false;
-	}
-}
-
-void CMisc::StickySpam(CBaseEntity* pLocal, CUserCmd* pCmd) {
-	static KeyHelper kSpam{ &Vars::Misc::StickySpamKey.Value };
-	if (!G::WeaponCanAttack || !kSpam.Down() || !pLocal->IsAlive()) { return; }
-
-	CBaseCombatWeapon* pWeapon = pLocal->GetActiveWeapon();
-	const int iAmmo = pWeapon->GetClip1();
-
-	if (iAmmo == 0) { return; }
-	if (pWeapon->GetWeaponID() != TF_WEAPON_PIPEBOMBLAUNCHER) { return; }
-	
-	const float flChargingTime = (I::GlobalVars->curtime - pWeapon->GetChargeBeginTime());
-	const float flCharge = Math::RemapValClamped(flChargingTime, 0.f, 4.f, 0, 100);
-
-	//Utils::ConLog("CMisc::StickySpam", tfm::format("flCharge			:	%.0f", flCharge).c_str(), { 132, 255, 201, 255 });
-	//Utils::ConLog("CMisc::StickySpam", tfm::format("flChargeT		:	%.1f", flChargingTime).c_str(), { 132, 255, 201, 255 });
-
-	static bool bHasStarted = false;
-	static bool bFlip = false;
-
-	if (flCharge >= Vars::Misc::StickyChargePercent.Value && bHasStarted) { bFlip = false; }
-	else { bFlip = true; }
-
-	if (bFlip) { pCmd->buttons |= IN_ATTACK; bHasStarted = true; }
-	else { pCmd->buttons &= ~IN_ATTACK; bHasStarted = false; }
-
-	//Utils::ConLog("CMisc::StickySpam", tfm::format("bFlip				:	%d", bFlip).c_str(), { 132, 255, 201, 255 });
-	//Utils::ConLog("CMisc::StickySpam", tfm::format("bHasStarted		:	%d\n", bFlip).c_str(), { 132, 255, 201, 255 });
-}
-
-void CMisc::Glutton(CBaseEntity* pLocal, CUserCmd* pCmd) {
-	static KeyHelper kGlutton{ &Vars::Misc::InfiniteEatKey.Value };
-	if (!pLocal->IsAlive() || !kGlutton.Down()) { return; }
-
-	CBaseCombatWeapon* pWeapon = pLocal->GetActiveWeapon();
-	const int iWeaponID = pWeapon->GetWeaponID();
-	if (iWeaponID != TF_WEAPON_LUNCHBOX) { return; }
-
-	pCmd->buttons |= IN_ATTACK;
-
-	static float flLastSendTime = I::GlobalVars->curtime;		//	dont get disconnected
-	if (fabsf(I::GlobalVars->curtime - flLastSendTime) > .5f) {
-		I::EngineClient->ClientCmd_Unrestricted("taunt");
-		flLastSendTime = I::GlobalVars->curtime;
-	}
-}
-
-void CMisc::RageRetry(CBaseEntity* pLocal)
-{
-	if (Vars::Misc::RageRetry.Value)
-	{
-		if (pLocal->IsAlive() && pLocal->GetHealth() <= (pLocal->GetMaxHealth() * (Vars::Misc::RageRetryHealth.Value * 0.01f)))
-		{
-			I::EngineClient->ClientCmd_Unrestricted("retry");
-		}
-	}
-}
-
-void CMisc::EdgeJump(CBaseEntity* pLocal, CUserCmd* pCmd, const int nOldGroundEnt)
-{
-	if (nOldGroundEnt < 0 || !Vars::Misc::EdgeJump.Value) { return; }
-	static KeyHelper kEdge{ &Vars::Misc::EdgeJumpKey.Value };
-	if (Vars::Misc::EdgeJumpKey.Value && !kEdge.Down()) { return; }
-	if (!pLocal->IsAlive() || pLocal->OnSolid() || pLocal->IsSwimming()) { return; }
-	pCmd->buttons |= IN_JUMP;
-}
-
-void CMisc::DuckJump(CBaseEntity* pLocal, CUserCmd* pCmd) {
-	if (!Vars::Misc::DuckJump.Value && !Vars::Misc::Followbot::Enabled.Value) { return; }
-	if (!pLocal->IsAlive() || pLocal->OnSolid() || pLocal->IsSwimming() || pLocal->IsStunned()) { return; }
-	
-	pCmd->buttons |= IN_DUCK;
-}
-
 void CMisc::FastAccel(CUserCmd* pCmd, CBaseEntity* pLocal, bool* pSendPacket)
 {
 	bFastAccel = false;
@@ -633,7 +472,7 @@ void CMisc::AutoJump(CUserCmd* pCmd, CBaseEntity* pLocal)
 	static bool bHopping = bCurHop;
 	static bool bTried = false;
 
-	if (bCurHop && !bTried)
+	if (bCurHop && !bTried) 
 	{	//	this is our initial jump
 		bTried = true;
 		bHopping = true; return;
@@ -643,7 +482,7 @@ void CMisc::AutoJump(CUserCmd* pCmd, CBaseEntity* pLocal)
 		bTried = false;
 		pCmd->buttons &= ~IN_JUMP; return;
 	}
-	else if (bHopping && bJumpHeld && (!pLocal->OnSolid() || pLocal->IsDucking()))
+	else if (bHopping && !pLocal->OnSolid() && bJumpHeld)
 	{	//	 we are not on the ground and the key is in the same hold cycle
 		bTried = false;
 		pCmd->buttons &= ~IN_JUMP; return;
@@ -744,31 +583,110 @@ void CMisc::AutoStrafe(CUserCmd* pCmd, CBaseEntity* pLocal)
 			};
 
 			const float pDelta = perfectDelta(speed, pLocal);
-			if ((!isJumping || wasJumping) && pDelta)
+			if (!isJumping || wasJumping) //credits to fourteen
 			{
-				const float yaw = DEG2RAD(pCmd->viewangles.y);
-				const float velDir = atan2f(vel.y, vel.x) - yaw;
-				const float wishAng = atan2f(-pCmd->sidemove, pCmd->forwardmove);
-				const float delta = Math::AngleDiffRad(velDir, wishAng);
+				static auto old_yaw = 0.0f;
 
-				const float moveDir = delta < 0.0f ? velDir + pDelta : velDir - pDelta;
+				auto get_velocity_degree = [](float velocity)
+				{
+					auto tmp = RAD2DEG(atan(30.0f / velocity));
 
-				pCmd->forwardmove = cosf(moveDir) * cl_sidespeed->GetFloat();
-				pCmd->sidemove = -sinf(moveDir) * cl_sidespeed->GetFloat();
+					#define CheckIfNonValidNumber(x) (fpclassify(x) == FP_INFINITE || fpclassify(x) == FP_NAN || fpclassify(x) == FP_SUBNORMAL)
+					if (CheckIfNonValidNumber(tmp) || tmp > 90.0f)
+						return 90.0f;
+
+					else if (tmp < 0.0f)
+						return 0.0f;
+					else
+						return tmp;
+				};
+
+				if (pLocal->GetMoveType() != MOVETYPE_WALK)
+					return;
+
+				auto velocity = pLocal->m_vecVelocity();
+				velocity.z = 0.0f;
+
+				auto forwardmove = pCmd->forwardmove;
+				auto sidemove = pCmd->sidemove;
+
+				if (velocity.Length2D() < 5.0f && !forwardmove && !sidemove)
+					return;
+
+				static auto flip = false;
+				flip = !flip;
+
+				auto turn_direction_modifier = flip ? 1.0f : -1.0f;
+				auto viewangles = pCmd->viewangles;
+
+				if (forwardmove || sidemove)
+				{
+					pCmd->forwardmove = 0.0f;
+					pCmd->sidemove = 0.0f;
+
+					auto turn_angle = atan2(-sidemove, forwardmove);
+					viewangles.y += turn_angle * M_RADPI;
+				}
+				else if (forwardmove) //-V550
+					pCmd->forwardmove = 0.0f;
+
+				auto strafe_angle = RAD2DEG(atan(15.0f / velocity.Length2D()));
+
+				if (strafe_angle > 90.0f)
+					strafe_angle = 90.0f;
+				else if (strafe_angle < 0.0f)
+					strafe_angle = 0.0f;
+
+				auto temp = Vector(0.0f, viewangles.y - old_yaw, 0.0f);
+				temp.y = Math::NormalizeYaw(temp.y);
+
+				auto yaw_delta = temp.y;
+				old_yaw = viewangles.y;
+
+				auto abs_yaw_delta = fabs(yaw_delta);
+
+				Vector velocity_angles;
+				Math::VectorAngles(velocity, velocity_angles);
+
+				temp = Vector(0.0f, viewangles.y - velocity_angles.y, 0.0f);
+				temp.y = Math::NormalizeYaw(temp.y);
+
+				auto velocityangle_yawdelta = temp.y;
+				auto velocity_degree = get_velocity_degree(velocity.Length2D()) * 0.3f;
+
+				if (velocityangle_yawdelta <= velocity_degree || velocity.Length2D() <= 15.0f)
+				{
+					if (-velocity_degree <= velocityangle_yawdelta || velocity.Length2D() <= 15.0f)
+					{
+						viewangles.y += strafe_angle * turn_direction_modifier;
+						pCmd->sidemove = cl_sidespeed->GetFloat() * turn_direction_modifier;
+					}
+					else
+					{
+						viewangles.y = velocity_angles.y - velocity_degree;
+						pCmd->sidemove = cl_sidespeed->GetFloat();
+					}
+				}
+				else
+				{
+					viewangles.y = velocity_angles.y + velocity_degree;
+					pCmd->sidemove = -cl_sidespeed->GetFloat();
+				}
+
+				Vector angles_move;
+				auto move = Vector(pCmd->forwardmove, pCmd->sidemove, 0.0f);
+				auto speed = move.Length();
+				Math::VectorAngles(move, angles_move);
+
+				auto normalized_y = fmod(pCmd->viewangles.y + 180.0f, 360.0f) - 180.0f;
+				auto yaw = DEG2RAD(normalized_y - viewangles.y + angles_move.y);
+
+				pCmd->forwardmove = cos(yaw) * speed;
+				pCmd->sidemove = sin(yaw) * speed;
 			}
 			wasJumping = isJumping;
 			break;
 		}
-	}
-}
-
-void CMisc::NoiseMakerSpam(CBaseEntity* pLocal)
-{
-	if (!Vars::Misc::NoisemakerSpam.Value || pLocal->GetUsingActionSlot()) { return; }
-
-	if (pLocal->GetNextNoiseMakerTime() < I::GlobalVars->curtime)
-	{
-		I::EngineClient->ServerCmdKeyValues(new KeyValues("use_action_slot_item_server"));
 	}
 }
 
@@ -794,147 +712,6 @@ const std::string SPAM_CH[] = {
 	"Cathook - ca(n)t stop me meow!"
 };
 
-/* Chat & Voicechat Spam */
-void CMisc::ChatSpam()
-{
-	const float flCurTime = I::EngineClient->Time();
-	static float flNextSend = 0.0f;
-
-	if (flCurTime > flNextSend)
-	{
-		// Chat Spam
-		if (Vars::Misc::ChatSpam.Value != 0)
-		{
-			std::string spamMsg;
-
-			switch (Vars::Misc::ChatSpam.Value)
-			{
-				case 2: spamMsg = SPAM_LBOX[Utils::RandIntSimple(0, ARRAYSIZE(SPAM_LBOX) - 1)];
-					break;
-				case 3: spamMsg = SPAM_CH[Utils::RandIntSimple(0, ARRAYSIZE(SPAM_CH) - 1)];
-					break;
-				default: spamMsg = SPAM_FED[Utils::RandIntSimple(0, ARRAYSIZE(SPAM_FED) - 1)];
-					break;
-			}
-
-			Utils::ReplaceSpecials(spamMsg);
-
-			spamMsg.insert(0, "say ");
-			I::EngineClient->ClientCmd_Unrestricted(spamMsg.c_str());
-		}
-
-		// Voicechat Spam
-		if (Vars::Misc::VoicechatSpam.Value != 0)
-		{
-			std::string voiceCommand;
-			switch (Vars::Misc::VoicechatSpam.Value)
-			{
-				case 1: voiceCommand = "0 0"; break;
-				case 2: voiceCommand = "2 0"; break;
-				case 3: voiceCommand = "2 6"; break;
-				default: voiceCommand = tfm::format("%i %i", Utils::RandIntSimple(0, 2), Utils::RandIntSimple(0, 8)); break;
-			}
-
-			voiceCommand.insert(0, "voicemenu ");
-			I::EngineClient->ClientCmd_Unrestricted(voiceCommand.c_str());
-		}
-
-		flNextSend = (flCurTime + Vars::Misc::SpamInterval.Value);
-	}
-}
-
-void CMisc::AutoRocketJump(CUserCmd* pCmd, CBaseEntity* pLocal)
-{
-	if (!Vars::Misc::AutoRocketJump.Value || !G::WeaponCanAttack || !GetAsyncKeyState(VK_RBUTTON))
-	{
-		return;
-	}
-
-	if (I::EngineVGui->IsGameUIVisible() || I::VGuiSurface->IsCursorVisible())
-	{
-		return;
-	}
-
-	if (pLocal->GetClassNum() != CLASS_SOLDIER || !pLocal->OnSolid() || pLocal->IsDucking() || (pLocal->GetHealth() < 60 && Vars::Misc::NonLethalRocketJump.Value)) // health check is meh, you could check the damage of the launcher, and find the damage at distance from explosion, but that's a lot of work, and it will just be ~40 anyway.
-	{
-		return;
-	}
-
-	if (const auto& pWeapon = g_EntityCache.GetWeapon())
-	{
-		if (pWeapon->IsInReload())
-		{
-			pCmd->buttons |= IN_ATTACK;
-			return;
-		}
-		if (pCmd->buttons & IN_ATTACK)
-		{
-			pCmd->buttons &= ~IN_ATTACK;
-		}
-
-		if (G::CurItemDefIndex == Soldier_m_TheBeggarsBazooka
-			|| G::CurItemDefIndex == Soldier_m_TheCowMangler5000
-			|| pWeapon->GetSlot() != SLOT_PRIMARY)
-		{
-			return;
-		}
-
-		if (pLocal->GetViewOffset().z < 60.05f)
-		{
-			pCmd->buttons |= IN_ATTACK | IN_JUMP;
-
-			const Vec3 vVelocity = pLocal->GetVelocity();
-			Vec3 vAngles = { vVelocity.IsZero() ? 89.0f : 45.0f, Math::VelocityToAngles(vVelocity).y - 180.0f, 0.0f };
-
-			if (G::CurItemDefIndex != Soldier_m_TheOriginal && !vVelocity.IsZero())
-			{
-				Vec3 vForward = {}, vRight = {}, vUp = {};
-				Math::AngleVectors(vAngles, &vForward, &vRight, &vUp);
-				Math::VectorAngles((vForward * 23.5f) + (vRight * -5.6f) + (vUp * -3.0f), vAngles);
-			}
-
-			Math::ClampAngles(vAngles);
-			pCmd->viewangles = vAngles;
-			G::SilentTime = true;
-		}
-
-		else
-		{
-			pCmd->buttons |= IN_DUCK;
-		}
-	}
-}
-
-bool IsForceANature()
-{
-	return (G::CurItemDefIndex == Scout_m_ForceANature || G::CurItemDefIndex == Scout_m_FestiveForceANature);
-}
-
-void CMisc::AutoScoutJump(CUserCmd* pCmd, CBaseEntity* pLocal)
-{
-	static int iJumpKey = VK_RBUTTON;
-	static KeyHelper jumpKey{ &iJumpKey };
-	if (!Vars::Misc::AutoScoutJump.Value || !G::WeaponCanAttack || !jumpKey.Pressed())
-	{
-		return;
-	}
-
-	if (I::EngineVGui->IsGameUIVisible() || I::VGuiSurface->IsCursorVisible())
-	{
-		return;
-	}
-
-	if (pLocal->GetClassNum() != CLASS_SCOUT || !IsForceANature() || pLocal->IsDucking())
-	{
-		return;
-	}
-
-	pCmd->buttons |= IN_ATTACK | IN_JUMP | IN_FORWARD;
-	pCmd->forwardmove = 10.f;
-	pCmd->viewangles.x = 25.f;
-	G::SilentTime = true;
-}
-
 bool CMisc::TauntControl(CUserCmd* pCmd)
 {
 	bool bReturn = true;
@@ -943,24 +720,6 @@ bool CMisc::TauntControl(CUserCmd* pCmd)
 	{
 		if (pLocal->IsTaunting())
 		{
-			static KeyHelper spinKey{ &Vars::Misc::TauntSpinKey.Value };
-			if (Vars::Misc::TauntSpin.Value)
-			{
-				if (spinKey.Down())
-				{
-					if (m_flSpinYaw > 180)
-					{
-						m_flSpinYaw = -180;
-					}
-					m_flSpinYaw += Vars::Misc::TauntSpinSpeed.Value;
-
-					pCmd->viewangles.y += m_flSpinYaw;
-					pCmd->viewangles.x = 90.f;
-
-					bReturn = false;
-				}
-			}
-
 			if (Vars::Misc::TauntSlide.Value)
 			{
 				if (Vars::Misc::TauntControl.Value)
@@ -980,7 +739,7 @@ bool CMisc::TauntControl(CUserCmd* pCmd)
 					bReturn = false;
 				}
 
-				if (Vars::Misc::TauntFollowsCamera.Value && !spinKey.Down())
+				if (Vars::Misc::TauntFollowsCamera.Value)
 				{
 					Vec3 vAngle = I::EngineClient->GetViewAngles();
 					pCmd->viewangles.y = vAngle.y;
@@ -994,39 +753,6 @@ bool CMisc::TauntControl(CUserCmd* pCmd)
 	}
 
 	return bReturn;
-}
-
-void CMisc::ViewmodelFlip(CUserCmd* pCmd, CBaseEntity* pLocal)
-{
-	if (!Vars::Misc::ViewmodelFlip.Value || G::CurWeaponType != EWeaponType::PROJECTILE) { return; }
-
-	static auto cl_flipviewmodels = g_ConVars.FindVar("cl_flipviewmodels");
-	static bool defaultValue = cl_flipviewmodels->GetBool();
-
-	const auto aimTarget = I::ClientEntityList->GetClientEntity(G::CurrentTargetIdx);
-	if (G::CurrentTargetIdx <= 0 || !aimTarget || Utils::VisPosFraction(pLocal, pLocal->GetEyePosition(), aimTarget->GetWorldSpaceCenter()))
-	{
-		cl_flipviewmodels->SetValue(defaultValue);
-		return;
-	}
-
-	const auto localAngles = I::EngineClient->GetViewAngles();
-	const auto aimAngles = Math::CalcAngle(pLocal->GetEyePosition(), aimTarget->GetWorldSpaceCenter());
-
-	auto mod = [](float a, float n)
-	{
-		return a - std::floor(a / n) * n;
-	};
-
-	const auto angleDelta = mod((aimAngles.y - localAngles.y) + 180.f, 360.f) - 180.f;
-	if (angleDelta < -5.f)
-	{
-		cl_flipviewmodels->SetValue(true);
-	}
-	else if (angleDelta > 5.f)
-	{
-		cl_flipviewmodels->SetValue(false);
-	}
 }
 
 //	Accelerate ( wishdir, wishspeed, sv_accelerate.GetFloat() );
@@ -1055,63 +781,63 @@ void CMisc::FastStop(CUserCmd* pCmd, CBaseEntity* pLocal)
 
 		switch (stopType)
 		{
+		case 0:
+		{
+			nShiftTickG = 0;
+			nShiftTickA = 0;
+			return;
+		}
+		case 1:
+		{
+			switch (nShiftTickG)
+			{
 			case 0:
 			{
-				nShiftTickG = 0;
-				nShiftTickA = 0;
-				return;
+				G::ShouldStop = true;
+				predEndPoint = pLocal->GetVecOrigin() + pLocal->GetVecVelocity();
+				nShiftTickG++;
+				break;
 			}
-			case 1:
+
+			default:
 			{
-				switch (nShiftTickG)
-				{
-					case 0:
-					{
-						G::ShouldStop = true;
-						predEndPoint = pLocal->GetVecOrigin() + pLocal->GetVecVelocity();
-						nShiftTickG++;
-						break;
-					}
-
-					default:
-					{
-						nShiftTickG++;
-						break;
-					}
-				}//
-
-				currentPos = pLocal->GetVecOrigin();
-				Utils::WalkTo(pCmd, pLocal, predEndPoint, currentPos, (1.f / currentPos.Dist2D(predEndPoint)));
-				//	the "slight stop" that u can see when we do this is due to (i believe) the player reaching the desired point, and then constantly accelerating backwards, meaning their velocity-
-				//	when they finish shifting ticks, is lower than when they started.
-				//	alot of things worked better than (1/dist) as the scale, but caused issues on different classes, for now this is the best I can get it to.
-				return;
+				nShiftTickG++;
+				break;
 			}
-			case 2:
-			{
-				switch (nShiftTickA)
-				{
-					case 0:
-					{
-						predEndPoint = pLocal->GetVecOrigin();
-						nShiftTickA++;
-						break;
-					}
-					default:
-					{
-						nShiftTickA++;
-						break;
-					}
-				}
+			}//
 
-				currentPos = pLocal->GetVecOrigin();
-				Utils::WalkTo(pCmd, pLocal, predEndPoint, currentPos, 500);
-				return;
+			currentPos = pLocal->GetVecOrigin();
+			Utils::WalkTo(pCmd, pLocal, predEndPoint, currentPos, (1.f / currentPos.Dist2D(predEndPoint)));
+			//	the "slight stop" that u can see when we do this is due to (i believe) the player reaching the desired point, and then constantly accelerating backwards, meaning their velocity-
+			//	when they finish shifting ticks, is lower than when they started.
+			//	alot of things worked better than (1/dist) as the scale, but caused issues on different classes, for now this is the best I can get it to.
+			return;
+		}
+		case 2:
+		{
+			switch (nShiftTickA)
+			{
+			case 0:
+			{
+				predEndPoint = pLocal->GetVecOrigin();
+				nShiftTickA++;
+				break;
 			}
 			default:
 			{
-				return;
+				nShiftTickA++;
+				break;
 			}
+			}
+
+			currentPos = pLocal->GetVecOrigin();
+			Utils::WalkTo(pCmd, pLocal, predEndPoint, currentPos, 500);
+			return;
+		}
+		default:
+		{
+			return;
+		}
 		}
 	}
 }
@@ -1263,6 +989,20 @@ void CMisc::AutoPeek(CUserCmd* pCmd, CBaseEntity* pLocal)
 	}
 }
 
+#ifdef DEBUG
+void CMisc::DumpClassIDS() {
+	std::ofstream fDump("CLASSIDDUMP.txt");
+	fDump << "enum struct ETFClassID\n{\n";
+	CClientClass* ClientClass = I::BaseClientDLL->GetAllClasses();
+	while (ClientClass) {
+		fDump << "	" << ClientClass->GetName() << " = " << ClientClass->m_ClassID << ",\n";
+		ClientClass = ClientClass->m_pNext;
+	}
+	fDump << "}";
+	fDump.close();
+}
+#endif
+
 void CMisc::SteamRPC()
 {
 	if (!Vars::Misc::Steam::EnableRPC.Value)
@@ -1379,106 +1119,3 @@ void CMisc::UnlockAchievements()
 		g_SteamInterfaces.UserStats->RequestCurrentStats();
 	}
 }
-
-void CMisc::LockAchievements()
-{
-	using FN = IAchievementMgr * (*)(void);
-	const auto achievementmgr = GetVFunc<FN>(I::EngineClient, 114)();
-	if (achievementmgr)
-	{
-		g_SteamInterfaces.UserStats->RequestCurrentStats();
-		for (int i = 0; i < achievementmgr->GetAchievementCount(); i++)
-		{
-			g_SteamInterfaces.UserStats->ClearAchievement(achievementmgr->GetAchievementByIndex(i)->GetName());
-		}
-		g_SteamInterfaces.UserStats->StoreStats();
-		g_SteamInterfaces.UserStats->RequestCurrentStats();
-	}
-}
-
-
-#include <thread>
-
-#include <windows.h>
-#include <wininet.h>
-#include <string.h>
-#include <iostream>
-#pragma comment(lib, "wininet")
-
-void CStatistics::Clear()
-{
-	m_nCurrentKillstreak = m_nHighestKillstreak = m_nTotalDeaths = m_nTotalKills = 0;
-}
-
-void CStatistics::Submit()
-{
-	constexpr bool bIsDown = true;	//	set this to false if we ever get a working server
-	if (bIsDown) {
-		Utils::ConLog("FWARE-Statistics-Server", "Statistic server un-available.", { 255, 0, 114, 255 });
-		return;
-	}
-
-
-	if (!Vars::Misc::StoreStatistics.Value)
-	{
-		return;
-	}
-
-	std::string data_format = tfm::format("{\r\n    \"steamid\": \"%s\",\r\n    \"kills\": %d,\r\n    \"deaths\": %d,\r\n    \"highest_killstreak\": %d\r\n}", m_SteamID.SteamRender(), m_nTotalKills, m_nTotalDeaths, m_nHighestKillstreak);
-
-	std::wstring url = L"http://198.244.189.210:4077/submit_info";
-	HINTERNET session = InternetOpen(L"Hello", PRE_CONFIG_INTERNET_ACCESS, NULL, NULL, 0);
-	LPVOID data = (LPVOID)data_format.c_str();
-	LPCSTR header = "Content-Type: application/json";
-	HINTERNET hInternet = InternetOpenA("BALLSSSSS", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	HINTERNET hConnection = InternetConnectA(hInternet, "198.244.189.210", 4077, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 1);
-	HINTERNET hRequest = HttpOpenRequestA(hConnection, "POST", "/submit_info", NULL, NULL, NULL, 0, 1);
-	if (HttpSendRequestA(hRequest, header, strlen(header), data, strlen(data_format.c_str())))
-	{
-		Utils::ConLog("FWARE-Statistics-Server", "Succesfully sent statistics.", { 255, 0, 114, 255 });
-	}
-
-	InternetCloseHandle(hInternet);
-	InternetCloseHandle(hConnection);
-	InternetCloseHandle(hRequest);
-
-}
-
-void CStatistics::Event(CGameEvent* pEvent, const FNV1A_t uNameHash)
-{
-	if (uNameHash == FNV1A::HashConst("player_death"))
-	{
-		const int attacker = Utils::GetPlayerForUserID(pEvent->GetInt("attacker"));
-		const int userid = Utils::GetPlayerForUserID(pEvent->GetInt("userid"));
-
-		if (userid == I::EngineClient->GetLocalPlayer())
-		{
-			m_nCurrentKillstreak = 0;
-			m_nTotalDeaths++;
-			return;
-		}
-
-		if (attacker != I::EngineClient->GetLocalPlayer())
-		{
-			return;
-		}
-
-		m_nTotalKills++;
-		m_nCurrentKillstreak++;
-
-		if (m_nCurrentKillstreak > m_nHighestKillstreak)
-		{
-			m_nHighestKillstreak = m_nCurrentKillstreak;
-		}
-	}
-	else if (uNameHash == FNV1A::HashConst("player_spawn"))
-	{
-		const int userid = Utils::GetPlayerForUserID(pEvent->GetInt("userid"));
-
-		if (userid == I::EngineClient->GetLocalPlayer())
-		{
-			m_nCurrentKillstreak = 0;
-		}
-	}
-}
-

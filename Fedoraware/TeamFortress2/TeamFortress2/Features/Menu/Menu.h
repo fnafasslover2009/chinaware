@@ -14,9 +14,6 @@ class CMenu
 	void MenuMisc();
 	void SettingsWindow();
 	void DebugMenu();
-	void DrawCameraWindow();
-	void DrawCritDrag();
-
 
 	void AddDraggable(const char* szTitle, DragBox_t& info, bool bShouldDraw, bool setSize = false);
 
@@ -44,8 +41,8 @@ class CMenu
 
 	enum class ConfigTab
 	{
-		General,
-		Visuals
+			General,
+			Visuals
 	};
 
 	MenuTab CurrentTab = MenuTab::Aimbot;
@@ -80,9 +77,9 @@ public:
 	ImColor TextLight = { 240, 240, 240 };
 
 	// Fonts
-	ImFont* VerdanaSmall = nullptr;	// 12px
-	ImFont* Verdana = nullptr;		// 14px
-	ImFont* VerdanaBold = nullptr;	// 18px
+	ImFont* CalibriSmall = nullptr;	// 12px
+	ImFont* Calibri = nullptr;		// 14px
+	ImFont* CalibriBold = nullptr;	// 18px
 
 	ImFont* SectionFont = nullptr;	// 16px
 	ImFont* TitleFont = nullptr;	// 20px

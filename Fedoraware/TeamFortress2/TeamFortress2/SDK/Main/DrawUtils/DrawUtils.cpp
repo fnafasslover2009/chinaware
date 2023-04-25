@@ -116,7 +116,6 @@ void Draw_t::String(const size_t& font_idx, int x, int y, const Color_t& clr, co
 
 	//wsprintfW(wstr, L"%ls", cbuffer);
 
-
 	if (font_idx > m_vecFonts.size())
 	{
 		return;

@@ -138,7 +138,7 @@ MAKE_HOOK(C_BaseEntity_FireBullets, g_Pattern.Find(L"client.dll", L"55 8B EC 81 
 		return;
 	}
 
-	if (!pWeapon || (!Vars::Visuals::ParticleTracer.Value && !Vars::Visuals::BulletTracer.Value && !Vars::Visuals::Beans::Active.Value))
+	if (!pWeapon || (!Vars::Visuals::Particles::Tracers::ParticleTracer.Value && !Vars::Visuals::BulletTracer.Value && !Vars::Visuals::Beans::Active.Value))
 	{
 		return Hook.Original<FN>()(ecx, edx, pWeapon, info, bDoEffects, nDamageType, nCustomDamageType);
 	}
@@ -173,64 +173,141 @@ MAKE_HOOK(C_BaseEntity_FireBullets, g_Pattern.Find(L"client.dll", L"55 8B EC 81 
 
 		const int team = pLocal->GetTeamNum();
 
-		switch (Vars::Visuals::ParticleTracer.Value)
+		switch (Vars::Visuals::Particles::Tracers::ParticleTracer.Value)
 		{
 		//Machina
 			case 1:
-				Particles::ParticleTracer(team == 2 ? "dxhr_sniper_rail_red" : "dxhr_sniper_rail_blue", trace.vStartPos, trace.vEndPos,
-										  pLocal->GetIndex(), iAttachment, true);
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer(team == TEAM_RED ? "dxhr_sniper_rail_red" : "dxhr_sniper_rail_blue", trace.vStartPos, trace.vEndPos,
+						pLocal->GetIndex(), iAttachment, true);
+				}				
 				break;
 
 			//C.A.P.P.E.R
 			case 2:
-				pLocal->IsCritBoosted()
-					? (Particles::ParticleTracer(team == 2 ? "bullet_tracer_raygun_red_crit" : "bullet_tracer_raygun_blue_crit",
-					   trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true))
-					: (Particles::ParticleTracer(team == 2 ? "bullet_tracer_raygun_red" : "bullet_tracer_raygun_blue", trace.vStartPos,
-					   trace.vEndPos, pLocal->GetIndex(), iAttachment, true));
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer(team == TEAM_RED ? "bullet_tracer_raygun_red" : "bullet_tracer_raygun_blue", trace.vStartPos,
+						trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				}
 				break;
 
 			//Short circuit
 			case 3:
-				Particles::ParticleTracer(team == 2 ? "dxhr_lightningball_hit_zap_red" : "dxhr_lightningball_hit_zap_blue",
-										  trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer(team == TEAM_RED ? "dxhr_lightningball_hit_zap_red" : "dxhr_lightningball_hit_zap_blue",
+						trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				}
 				break;
 
 			//Merasmus ZAP
 			case 4:
-				Particles::ParticleTracer("merasmus_zap", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer("merasmus_zap", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				}
 				break;
 
-			//Merasmus ZAP Beam 2
 			case 5:
-				Particles::ParticleTracer("merasmus_zap_beam02", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
-										  true);
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer(team == TEAM_RED ? "bullet_bignasty_tracer01_blue" : "bullet_bignasty_tracer01_red",
+						trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+				}
 				break;
 
 			case 6:
-				pLocal->IsCritBoosted()
-					? (Particles::ParticleTracer(
-					team == 2 ? "bullet_bignasty_tracer01_red_crit" : "bullet_bignasty_tracer01_blue_crit",
-					trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true))
-					: (Particles::ParticleTracer(team == 2 ? "bullet_bignasty_tracer01_blue" : "bullet_bignasty_tracer01_red",
-					   trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true));
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer("tfc_sniper_distortion_trail", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(),
+						iAttachment, true);
+				}
 				break;
 
-			case 7:
-				Particles::ParticleTracer("tfc_sniper_distortion_trail", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(),
-										  iAttachment, true);
+			case 7: // black_ink, demo'd: https://youtu.be/Ba0lcMOfm9w 
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer("merasmus_zap_beam01", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
+						true);
+				}
 				break;
 
-			case 8: // black_ink, demo'd: https://youtu.be/Ba0lcMOfm9w 
-				Particles::ParticleTracer("merasmus_zap_beam01", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
-										  true);
-				break;
-
-			case 9:
+			case 8:
 				// custom particle tracer, def not pasted from deathpole or anything. list @ dump_particlemanifest or @ https://github.com/tf2cheater2013/particles.txt
-				Particles::ParticleTracer(Vars::Visuals::ParticleName.c_str(), trace.vStartPos, trace.vEndPos, pLocal->GetIndex(),
-										  iAttachment, true);
+				if (!pLocal->IsCritBoosted())
+				{
+					Particles::ParticleTracer(Vars::Visuals::Particles::Tracers::ParticleName.c_str(), trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
+						true);
+				}
 				break;
+		}
+
+		switch (Vars::Visuals::Particles::Tracers::ParticleTracerCrits.Value) // crit tracers
+		{
+		case 1:
+			if (pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer(team == TEAM_RED ? "dxhr_sniper_rail_red" : "dxhr_sniper_rail_blue", trace.vStartPos, trace.vEndPos,
+					pLocal->GetIndex(), iAttachment, true);
+			}
+			break;
+
+		case 2: 
+			if (pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer(team == TEAM_RED ? "bullet_tracer_raygun_red_crit" : "bullet_tracer_raygun_blue_crit", trace.vStartPos,
+					trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+			}
+			break;
+
+		case 3:
+			if (pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer(team == TEAM_RED ? "dxhr_lightningball_hit_zap_red" : "dxhr_lightningball_hit_zap_blue",
+					trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+			}
+			break;
+
+		case 4:
+			if (pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer("merasmus_zap", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+			}
+			break;
+
+		case 5:
+			if (pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer( team == TEAM_RED ? "bullet_bignasty_tracer01_red_crit" : "bullet_bignasty_tracer01_blue_crit",
+					trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment, true);
+			}
+			break;
+
+		case 6:
+			if (!pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer("tfc_sniper_distortion_trail", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(),
+					iAttachment, true);
+			}
+			break;
+
+		case 7:
+			if (!pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer("merasmus_zap_beam01", trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
+					true);
+			}
+			break;
+
+		case 8:
+			if (!pLocal->IsCritBoosted())
+			{
+				Particles::ParticleTracer(Vars::Visuals::Particles::Tracers::ParticleNameCrits.c_str(), trace.vStartPos, trace.vEndPos, pLocal->GetIndex(), iAttachment,
+					true);
+			}
+			break;
 		}
 
 		if (Vars::Visuals::Beans::Active.Value)

@@ -251,32 +251,32 @@ IMaterial* CDMEChams::GetProxyMaterial(int nIndex)
 	using namespace ProxySkins;
 	switch (nIndex)
 	{
-		case 1:
-			return spectrumSplattered;
-		case 2:
-			return electroSkullsBlue;
-		case 3:
-			return frozenAurora;
-		case 4:
-			return jazzy;
-		case 5:
-			return hana;
-		case 6:
-			return wtf;
-		case 7:
-			return ghost;
-		case 8:
-			return flames;
-		case 9:
-			return spookwood;
-		case 10:
-			return edgy;
-		case 11:
-			return serenity;
-		case 12:
-			return fade;
-		default:
-			return nullptr;
+	case 1:
+		return spectrumSplattered;
+	case 2:
+		return electroSkullsBlue;
+	case 3:
+		return frozenAurora;
+	case 4:
+		return jazzy;
+	case 5:
+		return hana;
+	case 6:
+		return wtf;
+	case 7:
+		return ghost;
+	case 8:
+		return flames;
+	case 9:
+		return spookwood;
+	case 10:
+		return edgy;
+	case 11:
+		return serenity;
+	case 12:
+		return fade;
+	default:
+		return nullptr;
 	}
 }
 
@@ -286,70 +286,70 @@ int GetType(int EntIndex)
 	if (!pEntity) { return 0; }
 	switch (pEntity->GetClassID())
 	{
-		case ETFClassID::CTFViewModel:
-		{
-			return 1;
-		}
-		case ETFClassID::CBasePlayer:
-		case ETFClassID::CTFPlayer:
-		{
-			return 2;
-		}
-		case ETFClassID::CRagdollPropAttached:
-		case ETFClassID::CRagdollProp:
-		case ETFClassID::CTFRagdoll:
-		{
-			return 3;
-		}
-		case ETFClassID::CTFWearable:
-		{
-			return 4;
-		}
-		case ETFClassID::CTFAmmoPack:
+	case ETFClassID::CTFViewModel:
+	{
+		return 1;
+	}
+	case ETFClassID::CBasePlayer:
+	case ETFClassID::CTFPlayer:
+	{
+		return 2;
+	}
+	case ETFClassID::CRagdollPropAttached:
+	case ETFClassID::CRagdollProp:
+	case ETFClassID::CTFRagdoll:
+	{
+		return 3;
+	}
+	case ETFClassID::CTFWearable:
+	{
+		return 4;
+	}
+	case ETFClassID::CTFAmmoPack:
+	{
+		return 6;
+	}
+	case ETFClassID::CBaseAnimating:
+	{
+		const auto szName = pEntity->GetModelName();
+
+		if (Hash::IsAmmo(szName))
 		{
 			return 6;
 		}
-		case ETFClassID::CBaseAnimating:
-		{
-			const auto szName = pEntity->GetModelName();
 
-			if (Hash::IsAmmo(szName))
-			{
-				return 6;
-			}
+		if (Hash::IsHealth(szName))
+		{
+			return 7;
+		}
 
-			if (Hash::IsHealth(szName))
-			{
-				return 7;
-			}
-
-			break;
-		}
-		case ETFClassID::CObjectSentrygun:
-		case ETFClassID::CObjectDispenser:
-		case ETFClassID::CObjectTeleporter:
-		{
-			return 8;
-		}
-		case ETFClassID::CTFProjectile_Rocket:
-		case ETFClassID::CTFGrenadePipebombProjectile:
-		case ETFClassID::CTFProjectile_Jar:
-		case ETFClassID::CTFProjectile_JarGas:
-		case ETFClassID::CTFProjectile_JarMilk:
-		case ETFClassID::CTFProjectile_Arrow:
-		case ETFClassID::CTFProjectile_SentryRocket:
-		case ETFClassID::CTFProjectile_Flare:
-		case ETFClassID::CTFProjectile_Cleaver:
-		case ETFClassID::CTFProjectile_EnergyBall:
-		case ETFClassID::CTFProjectile_HealingBolt:
-		case ETFClassID::CTFProjectile_ThrowableBreadMonster:
-		{
-			return 9;
-		}
-		case ETFClassID::CBaseDoor:
-		{
-			return 10;
-		}
+		break;
+	}
+	case ETFClassID::CObjectSentrygun:
+	case ETFClassID::CObjectDispenser:
+	case ETFClassID::CObjectTeleporter:
+	{
+		return 8;
+	}
+	case ETFClassID::CTFProjectile_Rocket:
+	case ETFClassID::CTFGrenadePipebombProjectile:
+	case ETFClassID::CTFProjectile_Jar:
+	case ETFClassID::CTFProjectile_JarGas:
+	case ETFClassID::CTFProjectile_JarMilk:
+	case ETFClassID::CTFProjectile_Arrow:
+	case ETFClassID::CTFProjectile_SentryRocket:
+	case ETFClassID::CTFProjectile_Flare:
+	case ETFClassID::CTFProjectile_Cleaver:
+	case ETFClassID::CTFProjectile_EnergyBall:
+	case ETFClassID::CTFProjectile_HealingBolt:
+	case ETFClassID::CTFProjectile_ThrowableBreadMonster:
+	{
+		return 9;
+	}
+	case ETFClassID::CBaseDoor:
+	{
+		return 10;
+	}
 	}
 	CBaseCombatWeapon* pWeapon = reinterpret_cast<CBaseCombatWeapon*>(pEntity);
 	if (pWeapon)
@@ -421,80 +421,80 @@ Chams_t getChamsType(int nIndex, CBaseEntity* pEntity = nullptr)
 {
 	switch (nIndex)
 	{
-		case 0:
+	case 0:
+	{
+		return Vars::Chams::DME::Weapon;
+	}
+	case 1:
+	{
+		return Vars::Chams::DME::Hands;
+	}
+	case 2:
+	{
+		return pEntity ? GetPlayerChams(pEntity) : Chams_t();
+	}
+	case 3:
+	{
+		return Vars::Chams::Players::Ragdoll;
+	}
+	case 4:
+	{
+		if (!Vars::Chams::Players::Wearables.Value) { return Chams_t(); }
+		if (!pEntity) { return Chams_t(); }
+		if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->m_hOwnerEntity()))
 		{
-			return Vars::Chams::DME::Weapon;
+			return GetPlayerChams(pOwner);
 		}
-		case 1:
+		return Chams_t();
+	}
+	case 5:
+	{
+		if (!Vars::Chams::Players::Weapons.Value) { return Chams_t(); }
+		if (!pEntity) { return Chams_t(); }
+		if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->m_hOwnerEntity()))
 		{
-			return Vars::Chams::DME::Hands;
+			return GetPlayerChams(pOwner);
 		}
-		case 2:
+		return Chams_t();
+	}
+	case 6:
+	{
+		return Vars::Chams::World::Ammo;
+	}
+	case 7:
+	{
+		return Vars::Chams::World::Health;
+	}
+	case 8:
+	{
+		if (!pEntity) { return Chams_t(); }
+		const auto& Building = reinterpret_cast<CBaseObject*>(pEntity);
+		if (!Building || !(!Building->GetCarried() && Building->GetConstructed())) { return Chams_t(); }
+		if (CBaseEntity* pOwner = Building->GetOwner())
 		{
-			return pEntity ? GetPlayerChams(pEntity) : Chams_t();
+			return GetBuildingChams(pOwner);
 		}
-		case 3:
-		{
-			return Vars::Chams::Players::Ragdoll;
-		}
-		case 4:
-		{
-			if (!Vars::Chams::Players::Wearables.Value) { return Chams_t(); }
-			if (!pEntity) { return Chams_t(); }
-			if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->m_hOwnerEntity()))
+		else if (int teamNum = pEntity->GetTeamNum())
+		{	// if we don't have an owner, we need to do this, or else spawned buildings that do have a team will return no cham struct.
+			CBaseEntity* pLocal = g_EntityCache.GetLocal();
+			if (pLocal)
 			{
-				return GetPlayerChams(pOwner);
+				return (teamNum = pLocal->GetTeamNum()) ? Vars::Chams::Buildings::Team : Vars::Chams::Buildings::Enemy;
 			}
-			return Chams_t();
 		}
-		case 5:
+		return Chams_t();
+	}
+	case 9:
+	{
+		if (!pEntity) { return Chams_t(); }
+		if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(reinterpret_cast<int>(pEntity->GetThrower())))
 		{
-			if (!Vars::Chams::Players::Weapons.Value) { return Chams_t(); }
-			if (!pEntity) { return Chams_t(); }
-			if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->m_hOwnerEntity()))
-			{
-				return GetPlayerChams(pOwner);
-			}
-			return Chams_t();
+			return GetPlayerChams(pOwner);
 		}
-		case 6:
-		{
-			return Vars::Chams::World::Ammo;
-		}
-		case 7:
-		{
-			return Vars::Chams::World::Health;
-		}
-		case 8:
-		{
-			if (!pEntity) { return Chams_t(); }
-			const auto& Building = reinterpret_cast<CBaseObject*>(pEntity);
-			if (!Building || !(!Building->GetCarried() && Building->GetConstructed())) { return Chams_t(); }
-			if (CBaseEntity* pOwner = Building->GetOwner())
-			{
-				return GetBuildingChams(pOwner);
-			}
-			else if (int teamNum = pEntity->GetTeamNum())
-			{	// if we don't have an owner, we need to do this, or else spawned buildings that do have a team will return no cham struct.
-				CBaseEntity* pLocal = g_EntityCache.GetLocal();
-				if (pLocal)
-				{
-					return (teamNum = pLocal->GetTeamNum()) ? Vars::Chams::Buildings::Team : Vars::Chams::Buildings::Enemy;
-				}
-			}
-			return Chams_t();
-		}
-		case 9:
-		{
-			if (!pEntity) { return Chams_t(); }
-			if (CBaseEntity* pOwner = I::ClientEntityList->GetClientEntityFromHandle(reinterpret_cast<int>(pEntity->GetThrower())))
-			{
-				return GetPlayerChams(pOwner);
-			}
-			return Chams_t();
-		}
-		default:
-			return Chams_t();
+		return Chams_t();
+	}
+	default:
+		return Chams_t();
 	}
 }
 
@@ -727,24 +727,12 @@ bool CDMEChams::Render(const DrawModelState_t& pState, const ModelRenderInfo_t& 
 			if (pEntity && pLocal)
 			{
 				CBaseEntity* pOwner = pEntity;
-				if (drawType == 4 || drawType == 5){
+				if (drawType == 4 || drawType == 5) {
 					pOwner = I::ClientEntityList->GetClientEntityFromHandle(pEntity->m_hOwnerEntity());
 				}
 
 				if (pOwner && pOwner->IsPlayer() && pOwner != pLocal && pOwner->GetTeamNum() == pLocal->GetTeamNum() && pLocal->IsAlive())
 				{
-					if (Vars::Chams::Players::FadeoutTeammates.Value){
-						alpha = Math::RemapValClamped(pLocal->GetWorldSpaceCenter().DistTo(pEntity->GetWorldSpaceCenter()), 450.f, 100.f, Color::TOFLOAT(chams.colour.a), 0.0f);
-					}
-
-					if (Vars::Visuals::FadeOutFoV.Value > 0.f){
-						Vec3 vPos = pOwner->GetWorldSpaceCenter();
-						Vec3 vAngleTo = Math::CalcAngle(pLocal->GetShootPos(), vPos);
-						const float flFOVTo = Math::CalcFov(I::EngineClient->GetViewAngles(), vAngleTo);
-						const float flAlpha = Math::RemapValClamped(flFOVTo, 0.f, Vars::Visuals::FadeOutFoV.Value, .05f, Color::TOFLOAT(chams.colour.a));
-						alpha = fminf(flAlpha, alpha);
-					}
-					
 					if (alpha < 0.01f)
 					{	//dont draw if we are too close
 						return true;

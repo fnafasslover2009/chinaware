@@ -8,6 +8,7 @@ private:
 	{
 		std::wstring Name;
 		std::wstring Mode;
+		float RespawnTime;
 		bool IsFriend;
 		int Team;
 		int Index;

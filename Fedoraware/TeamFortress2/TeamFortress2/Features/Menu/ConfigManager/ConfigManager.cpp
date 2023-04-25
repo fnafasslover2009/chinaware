@@ -249,14 +249,15 @@ CConfigManager::CConfigManager()
 		std::filesystem::create_directory(ConfigPath + "\\Materials");
 	}
 
+	// Create 'Lua' folder for Lua scripts
+	if (!std::filesystem::exists(ConfigPath + "\\Lua"))
+	{
+		std::filesystem::create_directory(ConfigPath + "\\Lua");
+	}
+
 	if (!std::filesystem::exists(ConfigPath + "\\Visuals"))
 	{
 		std::filesystem::create_directory(ConfigPath + "\\Visuals");
-	}
-
-	if (!std::filesystem::exists(ConfigPath + "\\Killsays"))
-	{
-		std::filesystem::create_directory(ConfigPath + "\\Killsays");
 	}
 }
 
@@ -266,6 +267,7 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 	{
 		WriteTree.clear();
 
+		SAVE_VAR(Vars::Debug::DebugInfo); //I added this because I felt like it
 		SAVE_VAR(Vars::Menu::MenuKey);
 
 		//Aimbot
@@ -274,21 +276,17 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 			{
 				SAVE_VAR(Vars::Aimbot::Global::Active);
 				SAVE_VAR(Vars::Aimbot::Global::AimKey);
-				SAVE_VAR(Vars::Aimbot::Global::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Global::AutoShoot);
 				SAVE_VAR(Vars::Aimbot::Global::DontWaitForShot);
 				SAVE_VAR(Vars::Aimbot::Global::FlickatEnemies);
-				SAVE_VAR(Vars::Aimbot::Global::AimPlayers);
-				SAVE_VAR(Vars::Aimbot::Global::AimBuildings);
-				SAVE_VAR(Vars::Aimbot::Global::AimStickies);
-				SAVE_VAR(Vars::Aimbot::Global::AimNPC);
-				SAVE_VAR(Vars::Aimbot::Global::AimBombs);
+				SAVE_VAR(Vars::Aimbot::Global::AimAt);
 				SAVE_VAR(Vars::Aimbot::Global::IgnoreOptions);
 				SAVE_VAR(Vars::Aimbot::Global::TickTolerance);
 				SAVE_VAR(Vars::Aimbot::Global::BAimLethal);
 				SAVE_VAR(Vars::Aimbot::Global::showHitboxes);
 				SAVE_VAR(Vars::Aimbot::Global::ClearPreviousHitbox);
 				SAVE_VAR(Vars::Aimbot::Global::HitboxLifetime);
+				SAVE_VAR(Vars::Aimbot::Global::IgnoreCloakPercentage);
 			}
 
 			// Backtrack
@@ -302,18 +300,16 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 				SAVE_VAR(Vars::CritHack::AvoidRandom);
 				SAVE_VAR(Vars::CritHack::AlwaysMelee);
 				SAVE_VAR(Vars::CritHack::CritKey);
-				SAVE_VAR(Vars::CritHack::AutoMeleeCrit);
 			}
 
 			//Hitscan
 			{
-				//SAVE_VAR(Vars::Aimbot::Hitscan::Active);
+				SAVE_VAR(Vars::Aimbot::Hitscan::Active);
+				SAVE_VAR(Vars::Aimbot::Hitscan::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Hitscan::SortMethod);
 				SAVE_VAR(Vars::Aimbot::Hitscan::BackTrackMethod);
-				SAVE_VAR(Vars::Aimbot::Hitscan::RespectFOV);
 				SAVE_VAR(Vars::Aimbot::Hitscan::AimMethod);
 				SAVE_VAR(Vars::Aimbot::Hitscan::AimHitbox);
-				//SAVE_VAR(Vars::Aimbot::Hitscan::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Hitscan::SmoothingAmount);
 				SAVE_VAR(Vars::Aimbot::Hitscan::TapFire);
 				SAVE_VAR(Vars::Aimbot::Hitscan::TapFireDist);
@@ -324,7 +320,6 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 				SAVE_VAR(Vars::Aimbot::Hitscan::ScanBuildings);
 				SAVE_VAR(Vars::Aimbot::Hitscan::WaitForHeadshot);
 				SAVE_VAR(Vars::Aimbot::Hitscan::WaitForCharge);
-				SAVE_VAR(Vars::Aimbot::Hitscan::SpectatedSmooth);
 				SAVE_VAR(Vars::Aimbot::Hitscan::ScopedOnly);
 				SAVE_VAR(Vars::Aimbot::Hitscan::AutoScope);
 				SAVE_VAR(Vars::Aimbot::Hitscan::AutoRev);
@@ -333,43 +328,31 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 
 			//Projectile
 			{
-				//SAVE_VAR(Vars::Aimbot::Projectile::Active);
+				SAVE_VAR(Vars::Aimbot::Projectile::Active);
+				SAVE_VAR(Vars::Aimbot::Projectile::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Projectile::SortMethod);
-				SAVE_VAR(Vars::Aimbot::Projectile::RespectFOV);
 				SAVE_VAR(Vars::Aimbot::Projectile::AimMethod);
 				SAVE_VAR(Vars::Aimbot::Projectile::AimPosition);
-				SAVE_VAR(Vars::Aimbot::Projectile::VisTestPoints);
 				SAVE_VAR(Vars::Aimbot::Projectile::AllowedHitboxes);
 				SAVE_VAR(Vars::Aimbot::Projectile::FeetAimIfOnGround);
 				SAVE_VAR(Vars::Aimbot::Projectile::BounceKey);
 				SAVE_VAR(Vars::Aimbot::Projectile::SplashPrediction);
-
 				SAVE_VAR(Vars::Aimbot::Projectile::PredictionTime);
-				SAVE_VAR(Vars::Aimbot::Projectile::ScanPoints);
 				SAVE_VAR(Vars::Aimbot::Projectile::ScanScale);
-				SAVE_VAR(Vars::Aimbot::Projectile::PredictObscured);
-				SAVE_VAR(Vars::Aimbot::Projectile::NoSpread);
 				SAVE_VAR(Vars::Aimbot::Projectile::ChargeLooseCannon);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionAir);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionGround);
-				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionSamples);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionMinDifference);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionMaxDistance);
-				SAVE_VAR(Vars::Aimbot::Projectile::MinSplashPredictionDistance);
-				SAVE_VAR(Vars::Aimbot::Projectile::MaxSplashPredictionDistance);
-				SAVE_VAR(Vars::Aimbot::Projectile::WaitForHit);
-				//SAVE_VAR(Vars::Aimbot::Projectile::AimFOV);
 			}
 
 			//Melee
 			{
-				//SAVE_VAR(Vars::Aimbot::Melee::Active);
+				SAVE_VAR(Vars::Aimbot::Melee::Active);
+				SAVE_VAR(Vars::Aimbot::Melee::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Melee::SortMethod);
-				SAVE_VAR(Vars::Aimbot::Melee::RespectFOV);
 				SAVE_VAR(Vars::Aimbot::Melee::AimMethod);
-				//SAVE_VAR(Vars::Aimbot::Melee::AimFOV);
 				SAVE_VAR(Vars::Aimbot::Melee::SmoothingAmount);
-				SAVE_VAR(Vars::Aimbot::Melee::RangeCheck);
 				SAVE_VAR(Vars::Aimbot::Melee::PredictSwing);
 				SAVE_VAR(Vars::Aimbot::Melee::WhipTeam);
 			}
@@ -379,8 +362,6 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 		SAVE_VAR(Vars::Visuals::ThirdpersonOffsetWithArrows);
 		SAVE_VAR(Vars::Visuals::ThirdpersonArrowOffsetKey);
 		SAVE_VAR(Vars::Visuals::ThirdPersonKey);
-		SAVE_VAR(Vars::Visuals::FreecamKey);
-		SAVE_VAR(Vars::Visuals::FreecamSpeed);
 
 		//Triggerbot
 		{
@@ -449,72 +430,35 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 
 		//Misc
 		{
+			SAVE_VAR(Vars::Misc::ScoreboardPlayerlist);
 			SAVE_VAR(Vars::Misc::FastDeltaStrafe);
 			SAVE_VAR(Vars::Misc::AccurateMovement);
 			SAVE_VAR(Vars::Misc::DirectionalOnlyOnMove);
 			SAVE_VAR(Vars::Misc::AutoJump);
-			SAVE_VAR(Vars::Misc::AutoVote);
-			SAVE_VAR(Vars::Misc::DuckJump);
 			SAVE_VAR(Vars::Misc::TauntSlide);
 			SAVE_VAR(Vars::Misc::TauntControl);
-			SAVE_VAR(Vars::Misc::TauntSpin);
-			SAVE_VAR(Vars::Misc::TauntSpinKey);
-			SAVE_VAR(Vars::Misc::TauntSpinSpeed);
 			SAVE_VAR(Vars::Misc::TauntFollowsCamera);
 			SAVE_VAR(Vars::Misc::BypassPure);
-			SAVE_VAR(Vars::Misc::NoisemakerSpam);
 			SAVE_VAR(Vars::Misc::DisableInterpolation);
-			SAVE_VAR(Vars::Misc::MedalFlip);
-			SAVE_VAR(Vars::Misc::AutoRocketJump);
-			SAVE_VAR(Vars::Misc::NonLethalRocketJump);
-			SAVE_VAR(Vars::Misc::AutoScoutJump);
-			SAVE_VAR(Vars::Misc::ChatSpam);
 			SAVE_VAR(Vars::Misc::NoPush);
 			SAVE_VAR(Vars::Misc::AutoStrafe);
 			SAVE_VAR(Vars::Misc::Directional);
-			SAVE_VAR(Vars::Misc::StickySpamKey);
-			SAVE_VAR(Vars::Misc::StickyChargePercent);
-			SAVE_VAR(Vars::Misc::InfiniteEatKey);
-			SAVE_VAR(Vars::Misc::EdgeJump);
-			SAVE_VAR(Vars::Misc::EdgeJumpKey);
-			SAVE_VAR(Vars::Misc::StoreStatistics);
 			SAVE_VAR(Vars::Misc::AntiAFK);
 			SAVE_VAR(Vars::Misc::CheatsBypass);
-			SAVE_VAR(Vars::Misc::RageRetry);
-			SAVE_VAR(Vars::Misc::RageRetryHealth);
 			SAVE_VAR(Vars::Misc::MVMRes);
 			SAVE_VAR(Vars::Misc::VotingOptions);
 			SAVE_VAR(Vars::Misc::PingReducer);
 			SAVE_VAR(Vars::Misc::PingTarget);
-			SAVE_VAR(Vars::Misc::ExtendFreeze);
-			SAVE_VAR(Vars::Misc::ViewmodelFlip);
-			SAVE_VAR(Vars::Misc::AutoJoin);
-			SAVE_VAR(Vars::Misc::KillstreakWeapon);
-			SAVE_VAR(Vars::Misc::PartyNetworking);
-			SAVE_VAR(Vars::Misc::PartyMarker);
-			SAVE_VAR(Vars::Misc::PartyESP);
 			SAVE_VAR(Vars::Misc::CrouchSpeed);
-			SAVE_VAR(Vars::Misc::FastAccel);
 			SAVE_VAR(Vars::Misc::FakeAccelAngle);
 			SAVE_VAR(Vars::Misc::SoundBlock);
 			SAVE_VAR(Vars::Misc::ChatFlags);
-			SAVE_VAR(Vars::Misc::MedievalChat);
 			SAVE_VAR(Vars::Misc::AutoAcceptItemDrops);
 			SAVE_VAR(Vars::Misc::RegionChanger);
 			SAVE_VAR(Vars::Misc::RegionsAllowed);
 			SAVE_VAR(Vars::Misc::AutoCasualQueue);
-			SAVE_VAR(Vars::Misc::AntiVAC);
 			SAVE_VAR(Vars::Misc::InstantAccept);
-			SAVE_VAR(Vars::Misc::RunescapeChat);
-			SAVE_VAR(Vars::Misc::AntiAutobal);
-			SAVE_VAR(Vars::Misc::AntiViewmodelFlip);
-			SAVE_VAR(Vars::Visuals::ParticlesIgnoreZ);
-
-			// Followbot
-			{
-				SAVE_VAR(Vars::Misc::Followbot::Enabled);
-				SAVE_VAR(Vars::Misc::Followbot::Distance);
-			}
+			SAVE_VAR(Vars::Misc::AntiAutobalance);
 
 			// Cheater Detection
 			{
@@ -549,6 +493,8 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 				SAVE_VAR(Vars::Misc::CL_Move::RechargeKey); // { 0x52, L"Recharge Key" }; //R
 				SAVE_VAR(Vars::Misc::CL_Move::AutoRetain);
 				SAVE_VAR(Vars::Misc::CL_Move::RetainFakelag);
+				SAVE_VAR(Vars::Misc::CL_Move::RetainBlastJump);
+				SAVE_VAR(Vars::Misc::CL_Move::UnchokeOnAttack);
 				SAVE_VAR(Vars::Misc::CL_Move::RechargeWhileDead);
 				SAVE_VAR(Vars::Misc::CL_Move::AutoRecharge);
 				SAVE_VAR(Vars::Misc::CL_Move::AntiWarp);
@@ -573,14 +519,6 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 					SAVE_VAR(Vars::Misc::CL_Move::FLGChams::Material);
 					SAVE_OTHER(Vars::Misc::CL_Move::FLGChams::FakelagColor);
 				}
-			}
-			//Discord
-			{
-				SAVE_VAR(Vars::Misc::Discord::EnableRPC);
-				SAVE_VAR(Vars::Misc::Discord::IncludeMap);
-				SAVE_VAR(Vars::Misc::Discord::IncludeClass);
-				SAVE_VAR(Vars::Misc::Discord::IncludeTimestamp);
-				SAVE_VAR(Vars::Misc::Discord::WhatImagesShouldBeUsed);
 			}
 			//Steam
 			{
@@ -627,7 +565,6 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 
 		//Others
 		{
-
 			SAVE_OTHER(Vars::Menu::ModernDesign);
 			SAVE_OTHER(Vars::Menu::ShowPlayerlist);
 			SAVE_OTHER(Vars::Menu::ShowKeybinds);
@@ -652,12 +589,8 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 		ReadTree.clear();
 		read_json(ConfigPath + "\\" + configName + ConfigExtension, ReadTree);
 
-
-		// Menu
-		{
-
-			LOAD_VAR(Vars::Menu::MenuKey);
-		}
+		LOAD_VAR(Vars::Debug::DebugInfo);
+		LOAD_VAR(Vars::Menu::MenuKey);
 
 		//Aimbot
 		{
@@ -665,21 +598,17 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 			{
 				LOAD_VAR(Vars::Aimbot::Global::Active);
 				LOAD_VAR(Vars::Aimbot::Global::AimKey);
-				LOAD_VAR(Vars::Aimbot::Global::AimFOV);
 				LOAD_VAR(Vars::Aimbot::Global::AutoShoot);
 				LOAD_VAR(Vars::Aimbot::Global::DontWaitForShot);
 				LOAD_VAR(Vars::Aimbot::Global::FlickatEnemies);
-				LOAD_VAR(Vars::Aimbot::Global::AimPlayers);
-				LOAD_VAR(Vars::Aimbot::Global::AimBuildings);
-				LOAD_VAR(Vars::Aimbot::Global::AimStickies);
-				LOAD_VAR(Vars::Aimbot::Global::AimNPC);
-				LOAD_VAR(Vars::Aimbot::Global::AimBombs);
+				LOAD_VAR(Vars::Aimbot::Global::AimAt);
 				LOAD_VAR(Vars::Aimbot::Global::IgnoreOptions);
 				LOAD_VAR(Vars::Aimbot::Global::TickTolerance);
-                                LOAD_VAR(Vars::Aimbot::Global::BAimLethal);
+				LOAD_VAR(Vars::Aimbot::Global::BAimLethal);
 				LOAD_VAR(Vars::Aimbot::Global::showHitboxes);
 				LOAD_VAR(Vars::Aimbot::Global::ClearPreviousHitbox);
 				LOAD_VAR(Vars::Aimbot::Global::HitboxLifetime);
+				LOAD_VAR(Vars::Aimbot::Global::IgnoreCloakPercentage);
 			}
 
 
@@ -687,26 +616,25 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 			{
 				LOAD_VAR(Vars::Backtrack::Enabled);
 				LOAD_VAR(Vars::Backtrack::Latency);
-
 			}
 
 			{
 				LOAD_VAR(Vars::CritHack::Active);
+				LOAD_VAR(Vars::CritHack::Indicators);
+				LOAD_OTHER(Vars::CritHack::IndicatorPos);
 				LOAD_VAR(Vars::CritHack::AvoidRandom);
 				LOAD_VAR(Vars::CritHack::AlwaysMelee);
 				LOAD_VAR(Vars::CritHack::CritKey);
-				LOAD_VAR(Vars::CritHack::AutoMeleeCrit);
 			}
 
 			//Hitscan
 			{
-				//LOAD_VAR(Vars::Aimbot::Hitscan::Active);
+				LOAD_VAR(Vars::Aimbot::Hitscan::Active);
+				LOAD_VAR(Vars::Aimbot::Hitscan::AimFOV);
 				LOAD_VAR(Vars::Aimbot::Hitscan::SortMethod);
 				LOAD_VAR(Vars::Aimbot::Hitscan::BackTrackMethod);
 				LOAD_VAR(Vars::Aimbot::Hitscan::AimMethod);
 				LOAD_VAR(Vars::Aimbot::Hitscan::AimHitbox);
-				//LOAD_VAR(Vars::Aimbot::Hitscan::AimFOV);
-				LOAD_VAR(Vars::Aimbot::Hitscan::RespectFOV);
 				LOAD_VAR(Vars::Aimbot::Hitscan::SmoothingAmount);
 				LOAD_VAR(Vars::Aimbot::Hitscan::TapFire);
 				LOAD_VAR(Vars::Aimbot::Hitscan::TapFireDist);
@@ -717,7 +645,6 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 				LOAD_VAR(Vars::Aimbot::Hitscan::ScanBuildings);
 				LOAD_VAR(Vars::Aimbot::Hitscan::WaitForHeadshot);
 				LOAD_VAR(Vars::Aimbot::Hitscan::WaitForCharge);
-				LOAD_VAR(Vars::Aimbot::Hitscan::SpectatedSmooth);
 				LOAD_VAR(Vars::Aimbot::Hitscan::ScopedOnly);
 				LOAD_VAR(Vars::Aimbot::Hitscan::AutoScope);
 				LOAD_VAR(Vars::Aimbot::Hitscan::AutoRev);
@@ -726,42 +653,31 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 
 			//Projectile
 			{
-				//LOAD_VAR(Vars::Aimbot::Projectile::Active);
+				LOAD_VAR(Vars::Aimbot::Projectile::Active);
+				LOAD_VAR(Vars::Aimbot::Projectile::AimFOV);
 				LOAD_VAR(Vars::Aimbot::Projectile::SortMethod);
 				LOAD_VAR(Vars::Aimbot::Projectile::AimMethod);
 				LOAD_VAR(Vars::Aimbot::Projectile::AimPosition);
-				LOAD_VAR(Vars::Aimbot::Projectile::RespectFOV);
-				LOAD_VAR(Vars::Aimbot::Projectile::VisTestPoints);
 				LOAD_VAR(Vars::Aimbot::Projectile::AllowedHitboxes);
 				LOAD_VAR(Vars::Aimbot::Projectile::FeetAimIfOnGround);
 				LOAD_VAR(Vars::Aimbot::Projectile::BounceKey);
 				LOAD_VAR(Vars::Aimbot::Projectile::SplashPrediction);
 				LOAD_VAR(Vars::Aimbot::Projectile::PredictionTime);
-				LOAD_VAR(Vars::Aimbot::Projectile::ScanPoints);
 				LOAD_VAR(Vars::Aimbot::Projectile::ScanScale);
-				LOAD_VAR(Vars::Aimbot::Projectile::PredictObscured);
-				LOAD_VAR(Vars::Aimbot::Projectile::NoSpread);
 				LOAD_VAR(Vars::Aimbot::Projectile::ChargeLooseCannon);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionAir);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionGround);
-				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionSamples);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionMinDifference);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionMaxDistance);
-				LOAD_VAR(Vars::Aimbot::Projectile::MinSplashPredictionDistance);
-				LOAD_VAR(Vars::Aimbot::Projectile::MaxSplashPredictionDistance);
-				LOAD_VAR(Vars::Aimbot::Projectile::WaitForHit);
-				//LOAD_VAR(Vars::Aimbot::Projectile::AimFOV);
 			}
 
 			//Melee
 			{
-				//LOAD_VAR(Vars::Aimbot::Melee::Active);
+				LOAD_VAR(Vars::Aimbot::Melee::Active);
+				LOAD_VAR(Vars::Aimbot::Melee::AimFOV);
 				LOAD_VAR(Vars::Aimbot::Melee::SortMethod);
 				LOAD_VAR(Vars::Aimbot::Melee::AimMethod);
-				//LOAD_VAR(Vars::Aimbot::Melee::AimFOV);
-				LOAD_VAR(Vars::Aimbot::Melee::RespectFOV);
 				LOAD_VAR(Vars::Aimbot::Melee::SmoothingAmount);
-				LOAD_VAR(Vars::Aimbot::Melee::RangeCheck);
 				LOAD_VAR(Vars::Aimbot::Melee::PredictSwing);
 				LOAD_VAR(Vars::Aimbot::Melee::WhipTeam);
 			}
@@ -770,8 +686,6 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 		LOAD_VAR(Vars::Visuals::ThirdpersonOffsetWithArrows);
 		LOAD_VAR(Vars::Visuals::ThirdpersonArrowOffsetKey);
 		LOAD_VAR(Vars::Visuals::ThirdPersonKey);
-		LOAD_VAR(Vars::Visuals::FreecamKey);
-		LOAD_VAR(Vars::Visuals::FreecamSpeed);
 
 		//Triggerbot
 		{
@@ -840,70 +754,36 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 
 		//Misc
 		{
-			LOAD_VAR(Vars::Misc::FastDeltaStrafe);
+			LOAD_VAR(Vars::Misc::ScoreboardPlayerlist);
+			SAVE_VAR(Vars::Misc::FastDeltaStrafe);
 			LOAD_VAR(Vars::Misc::AccurateMovement);
 			LOAD_VAR(Vars::Misc::DirectionalOnlyOnMove);
 			LOAD_VAR(Vars::Misc::AutoJump);
-			LOAD_VAR(Vars::Misc::AutoVote);
-			LOAD_VAR(Vars::Misc::DuckJump);
 			LOAD_VAR(Vars::Misc::TauntSlide);
 			LOAD_VAR(Vars::Misc::TauntControl);
-			LOAD_VAR(Vars::Misc::TauntSpin);
-			LOAD_VAR(Vars::Misc::TauntSpinKey);
-			LOAD_VAR(Vars::Misc::TauntSpinSpeed);
 			LOAD_VAR(Vars::Misc::TauntFollowsCamera);
 			LOAD_VAR(Vars::Misc::BypassPure);
-			LOAD_VAR(Vars::Misc::NoisemakerSpam);
 			LOAD_VAR(Vars::Misc::DisableInterpolation);
-			LOAD_VAR(Vars::Misc::MedalFlip);
-			LOAD_VAR(Vars::Misc::AutoRocketJump);
-			LOAD_VAR(Vars::Misc::NonLethalRocketJump);
-			LOAD_VAR(Vars::Misc::AutoScoutJump);
-			LOAD_VAR(Vars::Misc::ChatSpam);
 			LOAD_VAR(Vars::Misc::NoPush);
-			LOAD_VAR(Vars::Misc::StickySpamKey);
-			LOAD_VAR(Vars::Misc::StickyChargePercent);
-			LOAD_VAR(Vars::Misc::InfiniteEatKey);
-			LOAD_VAR(Vars::Misc::EdgeJump);
-			LOAD_VAR(Vars::Misc::EdgeJumpKey);
-			LOAD_VAR(Vars::Misc::StoreStatistics);
 			LOAD_VAR(Vars::Misc::AutoStrafe);
 			LOAD_VAR(Vars::Misc::Directional);
 			LOAD_VAR(Vars::Misc::AntiAFK);
 			LOAD_VAR(Vars::Misc::CheatsBypass);
-			LOAD_VAR(Vars::Misc::RageRetry);
-			LOAD_VAR(Vars::Misc::RageRetryHealth);
 			LOAD_VAR(Vars::Misc::MVMRes);
 			LOAD_VAR(Vars::Misc::VotingOptions);
 			LOAD_VAR(Vars::Misc::PingReducer);
 			LOAD_VAR(Vars::Misc::PingTarget);
-			LOAD_VAR(Vars::Misc::ExtendFreeze);
-			LOAD_VAR(Vars::Misc::ViewmodelFlip);
-			LOAD_VAR(Vars::Misc::AutoJoin);
-			LOAD_VAR(Vars::Misc::KillstreakWeapon);
-			LOAD_VAR(Vars::Misc::PartyNetworking);
-			LOAD_VAR(Vars::Misc::PartyMarker);
-			LOAD_VAR(Vars::Misc::PartyESP);
 			LOAD_VAR(Vars::Misc::CrouchSpeed);
 			LOAD_VAR(Vars::Misc::FastAccel);
 			LOAD_VAR(Vars::Misc::FakeAccelAngle);
 			LOAD_VAR(Vars::Misc::SoundBlock);
 			LOAD_VAR(Vars::Misc::ChatFlags);
-			LOAD_VAR(Vars::Misc::MedievalChat);
 			LOAD_VAR(Vars::Misc::AutoAcceptItemDrops);
 			LOAD_VAR(Vars::Misc::RegionChanger);
 			LOAD_VAR(Vars::Misc::RegionsAllowed);
 			LOAD_VAR(Vars::Misc::AutoCasualQueue);
-			LOAD_VAR(Vars::Misc::AntiVAC);
 			LOAD_VAR(Vars::Misc::InstantAccept);
-			LOAD_VAR(Vars::Misc::AntiAutobal);
-			LOAD_VAR(Vars::Misc::RunescapeChat);
-
-			// Followbot
-			{
-				LOAD_VAR(Vars::Misc::Followbot::Enabled);
-				LOAD_VAR(Vars::Misc::Followbot::Distance);
-			}
+			LOAD_VAR(Vars::Misc::AntiAutobalance);
 
 			// Cheater Detection
 			{
@@ -937,6 +817,8 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 				LOAD_VAR(Vars::Misc::CL_Move::RechargeKey); // { 0x52, L"Recharge Key" }; //R
 				LOAD_VAR(Vars::Misc::CL_Move::AutoRetain);
 				LOAD_VAR(Vars::Misc::CL_Move::RetainFakelag);
+				LOAD_VAR(Vars::Misc::CL_Move::RetainBlastJump);
+				LOAD_VAR(Vars::Misc::CL_Move::UnchokeOnAttack);
 				LOAD_VAR(Vars::Misc::CL_Move::RechargeWhileDead);
 				LOAD_VAR(Vars::Misc::CL_Move::AutoRecharge);
 				LOAD_VAR(Vars::Misc::CL_Move::AntiWarp);
@@ -962,14 +844,6 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 					LOAD_VAR(Vars::Misc::CL_Move::FLGChams::Material);
 					LOAD_OTHER(Vars::Misc::CL_Move::FLGChams::FakelagColor);
 				}
-			}
-			//Discord
-			{
-				LOAD_VAR(Vars::Misc::Discord::EnableRPC);
-				LOAD_VAR(Vars::Misc::Discord::IncludeMap);
-				LOAD_VAR(Vars::Misc::Discord::IncludeClass);
-				LOAD_VAR(Vars::Misc::Discord::IncludeTimestamp);
-				LOAD_VAR(Vars::Misc::Discord::WhatImagesShouldBeUsed);
 			}
 			//Steam
 			{
@@ -1016,15 +890,12 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 
 		//Others
 		{
-
 			LOAD_OTHER(Vars::Menu::ModernDesign);
 			LOAD_OTHER(Vars::Menu::ShowPlayerlist);
 			LOAD_OTHER(Vars::Menu::ShowKeybinds);
 		}
 
-
-
-		CurrentConfig = configName;
+			CurrentConfig = configName;
 		F::Notifications.Add("Config " + configName + " loaded");
 	}
 	catch (...)
@@ -1040,12 +911,9 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 	try
 	{
 		WriteTree.clear();
-		
+
 		SAVE_OTHER(Vars::Menu::CheatName);
-		SAVE_OTHER(Vars::Menu::CheatPrefix);
-		SAVE_VAR(Vars::Menu::Vignette);
-		SAVE_VAR(Vars::Menu::ShowDVD);
-		SAVE_VAR(Vars::Menu::CloseOnUnfocus);
+		SAVE_OTHER(Vars::Menu::CheatPrefix);	
 		SAVE_VAR(Vars::Misc::CL_Move::DTBarStyle);
 		SAVE_OTHER(Vars::Misc::CL_Move::DTIndicator);
 		SAVE_VAR(Vars::Backtrack::BtChams::Enabled);
@@ -1058,36 +926,32 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_OTHER(Vars::CritHack::IndicatorPos);
 		SAVE_OTHER(Vars::Aimbot::Projectile::PredictionColor);
 		SAVE_VAR(Vars::ESP::Main::Active);
-		SAVE_VAR(Vars::ESP::Main::Outlinedbar);
 		SAVE_VAR(Vars::ESP::Main::EnableTeamEnemyColors);
-		SAVE_VAR(Vars::ESP::Main::DistanceToAlpha);
 		SAVE_VAR(Vars::ESP::Main::DormantSoundESP);
 		SAVE_VAR(Vars::ESP::Main::DormantTime);
-		SAVE_VAR(Vars::ESP::Main::DormantDist);
-		SAVE_VAR(Vars::ESP::Main::NetworkedDist);
 		SAVE_VAR(Vars::ESP::Players::Active);
-		SAVE_VAR(Vars::ESP::Players::ShowLocal);
+		SAVE_VAR(Vars::ESP::Players::IgnoreLocal);
 		SAVE_VAR(Vars::ESP::Players::IgnoreTeammates);
 		SAVE_VAR(Vars::ESP::Players::IgnoreCloaked);
 		SAVE_VAR(Vars::ESP::Players::Name);
 		SAVE_VAR(Vars::ESP::Players::NameCustom);
 		SAVE_OTHER(Vars::ESP::Players::NameColor);
-		SAVE_VAR(Vars::ESP::Players::NameBox);
 		SAVE_VAR(Vars::ESP::Players::Uber);
 		SAVE_VAR(Vars::ESP::Players::Class);
 		SAVE_VAR(Vars::ESP::Players::HealthText);
-		SAVE_VAR(Vars::ESP::Players::Cond);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Enabled);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Buffs);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Debuffs);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Other);
+		SAVE_VAR(Vars::ESP::Players::Conditions::LagComp);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Ping);
+		SAVE_VAR(Vars::ESP::Players::Conditions::KD);
 		SAVE_VAR(Vars::ESP::Players::HealthBar);
 		SAVE_VAR(Vars::ESP::Players::HealthBarStyle);
 		SAVE_VAR(Vars::ESP::Players::Box);
-		SAVE_VAR(Vars::ESP::Players::GUID);
-		SAVE_VAR(Vars::ESP::Players::Choked);
 		SAVE_VAR(Vars::ESP::Players::Alpha);
-		SAVE_VAR(Vars::ESP::Players::Lines);
 		SAVE_VAR(Vars::ESP::Players::Bones);
-		SAVE_VAR(Vars::ESP::Players::Dlights);
-		SAVE_VAR(Vars::ESP::Players::DlightRadius);
-		SAVE_VAR(Vars::ESP::Players::CheaterDetection);
+		SAVE_VAR(Vars::ESP::Players::PriorityText);
 		SAVE_VAR(Vars::ESP::Players::WeaponIcon);
 		SAVE_VAR(Vars::ESP::Players::WeaponText);
 		SAVE_VAR(Vars::ESP::Players::SniperSightlines);
@@ -1096,7 +960,6 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::ESP::Buildings::Name);
 		SAVE_VAR(Vars::ESP::Buildings::NameCustom);
 		SAVE_OTHER(Vars::ESP::Buildings::NameColor);
-		SAVE_VAR(Vars::ESP::Buildings::NameBox);
 		SAVE_VAR(Vars::ESP::Buildings::Health);
 		SAVE_VAR(Vars::ESP::Buildings::Owner);
 		SAVE_VAR(Vars::ESP::Buildings::Level);
@@ -1104,10 +967,6 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::ESP::Buildings::HealthBar);
 		SAVE_VAR(Vars::ESP::Buildings::Box);
 		SAVE_VAR(Vars::ESP::Buildings::Alpha);
-		SAVE_VAR(Vars::ESP::Buildings::Dlights);
-		SAVE_VAR(Vars::ESP::Buildings::DlightRadius);
-		SAVE_VAR(Vars::ESP::Buildings::TeleExitDir);
-		SAVE_OTHER(Vars::ESP::Buildings::TeleExitDirColor);
 		SAVE_VAR(Vars::ESP::World::Active);
 		SAVE_VAR(Vars::ESP::World::HealthName);
 		SAVE_VAR(Vars::ESP::World::HealthLine);
@@ -1126,10 +985,10 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Chams::Players::Active);
 		SAVE_VAR(Vars::Chams::Players::Wearables);
 		SAVE_VAR(Vars::Chams::Players::Weapons);
-		SAVE_VAR(Vars::Chams::Players::FadeoutTeammates);
 		SAVE_VAR(Vars::Chams::Buildings::Active);
 		SAVE_VAR(Vars::Chams::Buildings::Material);
 		SAVE_VAR(Vars::Chams::Buildings::IgnoreZ);
+		SAVE_VAR(Vars::Chams::Buildings::EnemyOnly);
 		SAVE_VAR(Vars::Chams::World::Active);
 		SAVE_VAR(Vars::Chams::DME::Active);
 		SAVE_VAR(Vars::Chams::DME::HandsGlowOverlay);
@@ -1189,7 +1048,8 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Radar::World::Active);
 		SAVE_VAR(Vars::Radar::World::Health);
 		SAVE_VAR(Vars::Radar::World::Ammo);
-		SAVE_VAR(Vars::Visuals::FadeOutFoV);
+		SAVE_VAR(Vars::Visuals::ScoreboardColours);
+		SAVE_VAR(Vars::Visuals::MenuCelebration);
 		SAVE_VAR(Vars::Visuals::CleanScreenshots);
 		SAVE_VAR(Vars::Visuals::RemoveMOTD);
 		SAVE_VAR(Vars::Visuals::RemoveDisguises);
@@ -1203,28 +1063,16 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Visuals::RemoveScreenEffects);
 		SAVE_VAR(Vars::Visuals::RemoveDSP);
 		SAVE_VAR(Vars::Visuals::RemoveConvarQueries);
-		SAVE_VAR(Vars::Visuals::VisualOverlay);
 		SAVE_VAR(Vars::Visuals::RemoveScreenOverlays);
 		SAVE_VAR(Vars::Visuals::PreventForcedAngles);
-		SAVE_VAR(Vars::Visuals::ScopeLines);
 		SAVE_VAR(Vars::Visuals::PickupTimers);
 		SAVE_VAR(Vars::Visuals::RemoveZoom);
 		SAVE_VAR(Vars::Visuals::RemovePunch);
 		SAVE_VAR(Vars::Visuals::CrosshairAimPos);
 		SAVE_VAR(Vars::Visuals::ChatInfoText);
 		SAVE_VAR(Vars::Visuals::ChatInfoChat);
-		SAVE_VAR(Vars::Visuals::ChatInfoGrayScale);
 		SAVE_VAR(Vars::Visuals::OutOfFOVArrowsOutline);
 		SAVE_VAR(Vars::Visuals::SpectatorList);
-		SAVE_VAR(Vars::Visuals::CameraMode);
-		SAVE_VAR(Vars::Visuals::CameraFOV);
-		SAVE_VAR(Vars::Visuals::SpyWarning);
-		SAVE_VAR(Vars::Visuals::SpyWarningAnnounce);
-		SAVE_VAR(Vars::Visuals::SpyWarningStyle);
-		SAVE_VAR(Vars::Visuals::SpyWarningVisibleOnly);
-		SAVE_VAR(Vars::Visuals::SpyWarningIgnoreFriends);
-		SAVE_VAR(Vars::Visuals::Snow);
-		SAVE_VAR(Vars::Visuals::ToolTips);
 		SAVE_VAR(Vars::Visuals::ThirdPerson);
 		SAVE_VAR(Vars::Visuals::ThirdPersonSilentAngles);
 		SAVE_VAR(Vars::Visuals::ThirdPersonInstantYaw);
@@ -1238,14 +1086,14 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Visuals::SkyModulation);
 		SAVE_VAR(Vars::Visuals::PropWireframe);
 		SAVE_VAR(Vars::Visuals::SkyboxChanger);
-		SAVE_VAR(Vars::Visuals::ParticleColors);
-		SAVE_VAR(Vars::Visuals::RGBParticles);
-		SAVE_VAR(Vars::Visuals::RainbowSpeed);
+		SAVE_VAR(Vars::Visuals::Particles::Colors::Type);
+		SAVE_VAR(Vars::Visuals::Particles::Colors::RainbowSpeed);
+		SAVE_VAR(Vars::Visuals::Particles::Feet::Enabled);
+		SAVE_VAR(Vars::Visuals::Particles::Feet::ColorType);
+		SAVE_VAR(Vars::Visuals::Particles::Feet::DashOnly);
 		SAVE_VAR(Vars::Visuals::BulletTracer);
 		SAVE_VAR(Vars::Visuals::BulletTracerRainbow);
-		SAVE_VAR(Vars::Visuals::HalloweenSpellFootsteps);
-		SAVE_VAR(Vars::Visuals::ColorType);
-		SAVE_VAR(Vars::Visuals::DashOnly);
+		SAVE_STRING(Vars::Visuals::Particles::Tracers::ParticleName);
 		SAVE_VAR(Vars::Visuals::AimbotViewmodel);
 		SAVE_VAR(Vars::Visuals::ViewmodelSway);
 		SAVE_VAR(Vars::Visuals::ViewmodelSwayInterp);
@@ -1264,9 +1112,6 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Visuals::MaxDist);
 		SAVE_VAR(Vars::Visuals::MinDist);
 		SAVE_VAR(Vars::Visuals::FovArrowsDist);
-		SAVE_VAR(Vars::Visuals::AimPosSquare);
-		SAVE_VAR(Vars::Visuals::Rain);
-		SAVE_VAR(Vars::Debug::DebugInfo);
 		SAVE_VAR(Vars::Visuals::DoPostProcessing);
 		SAVE_VAR(Vars::Visuals::EquipRegionUnlock);
 		SAVE_VAR(Vars::Visuals::NoStaticPropFade);
@@ -1288,28 +1133,22 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::Visuals::DamageLoggerText);
 		SAVE_VAR(Vars::Visuals::DamageLoggerChat);
 		SAVE_VAR(Vars::Visuals::DamageLoggerConsole);
-		SAVE_VAR(Vars::Visuals::ParticleTracer);
-		SAVE_VAR(Vars::Visuals::VisionModifier);
+		SAVE_VAR(Vars::Visuals::Particles::Tracers::ParticleTracer);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::EnemyOnly);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::Burning);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::Electrocuted);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::BecomeAsh);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::Dissolve);
 		SAVE_VAR(Vars::Visuals::RagdollEffects::RagdollType);
-		SAVE_VAR(Vars::Visuals::Fog::CustomFog);
-		SAVE_VAR(Vars::Visuals::Fog::FogDensity);
-		SAVE_VAR(Vars::Visuals::Fog::FogDensitySkybox);
-		SAVE_VAR(Vars::Visuals::Fog::FogStart);
-		SAVE_VAR(Vars::Visuals::Fog::FogStartSkybox);
-		SAVE_VAR(Vars::Visuals::Fog::FogEnd);
-		SAVE_VAR(Vars::Visuals::Fog::FogEndSkybox);
-		SAVE_OTHER(Vars::Visuals::Fog::FogColor);
-		SAVE_OTHER(Vars::Visuals::Fog::FogColorSkybox);
-		SAVE_OTHER(Vars::Menu::Colors::MenuAccent);
+		SAVE_VAR(Vars::Visuals::RagdollEffects::SeparateVectors);
+		SAVE_VAR(Vars::Visuals::RagdollEffects::RagdollForce);
+		SAVE_VAR(Vars::Visuals::RagdollEffects::RagdollForceForwards);
+		SAVE_VAR(Vars::Visuals::RagdollEffects::RagdollForceSides);
+		SAVE_VAR(Vars::Visuals::RagdollEffects::RagdollForceUp);
+		SAVE_OTHER(Vars::Menu::MenuAccent);
 		SAVE_OTHER(Colors::OutlineESP);
 		SAVE_OTHER(Colors::DTBarIndicatorsCharged);
 		SAVE_OTHER(Colors::DTBarIndicatorsCharging);
-		SAVE_OTHER(Colors::ChokedBar);
 		SAVE_OTHER(Colors::GradientHealthBar);
 		SAVE_OTHER(Colors::GradientOverhealBar);
 		SAVE_OTHER(Colors::Cond);
@@ -1348,12 +1187,9 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_OTHER(Colors::NotifOutline);
 		SAVE_OTHER(Colors::NotifText);
 		SAVE_OTHER(Colors::WeaponIcon);
-		SAVE_OTHER(Colors::NoscopeLines1);
-		SAVE_OTHER(Colors::NoscopeLines2);
 		SAVE_OTHER(Colors::bonecolor);
 		SAVE_OTHER(Colors::HitboxFace);
 		SAVE_OTHER(Colors::HitboxEdge);
-		SAVE_OTHER(Colors::FeetColor);
 		SAVE_OTHER(Vars::Skybox::SkyboxNum);
 		SAVE_STRING(Vars::Skybox::SkyboxName);
 		SAVE_OTHER(Vars::Chams::Players::Local);
@@ -1372,7 +1208,7 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_OTHER(Vars::Chams::Buildings::Target);
 		SAVE_OTHER(Vars::Chams::World::Health);
 		SAVE_OTHER(Vars::Chams::World::Ammo);
-		SAVE_OTHER(Vars::Chams::World::Projectiles);
+		SAVE_OTHER(Vars::Chams::World::Projectiles::Projectiles);
 		SAVE_STRING(Vars::Fonts::FONT_ESP::szName);
 		SAVE_VAR(Vars::Fonts::FONT_ESP::nTall);
 		SAVE_VAR(Vars::Fonts::FONT_ESP::nWeight);
@@ -1417,9 +1253,6 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 
 		LOAD_OTHER(Vars::Menu::CheatName);
 		LOAD_OTHER(Vars::Menu::CheatPrefix);
-		LOAD_VAR(Vars::Menu::Vignette);
-		LOAD_VAR(Vars::Menu::ShowDVD);
-		LOAD_VAR(Vars::Menu::CloseOnUnfocus);
 		LOAD_VAR(Vars::Misc::CL_Move::DTBarStyle);
 		LOAD_OTHER(Vars::Misc::CL_Move::DTIndicator);
 		LOAD_VAR(Vars::Backtrack::BtChams::Enabled);
@@ -1428,43 +1261,37 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Backtrack::BtChams::IgnoreZ);
 		LOAD_VAR(Vars::Backtrack::BtChams::Material);
 		LOAD_OTHER(Vars::Backtrack::BtChams::BacktrackColor);
-		LOAD_OTHER(Vars::Aimbot::Projectile::PredictionColor);
 		LOAD_VAR(Vars::CritHack::Indicators);
 		LOAD_OTHER(Vars::CritHack::IndicatorPos);
+		LOAD_OTHER(Vars::Aimbot::Projectile::PredictionColor);
 		//ESP
 		LOAD_VAR(Vars::ESP::Main::Active);
-		LOAD_VAR(Vars::ESP::Main::Outlinedbar);
 		LOAD_VAR(Vars::ESP::Main::EnableTeamEnemyColors);
-		LOAD_VAR(Vars::ESP::Main::DistanceToAlpha);
 		LOAD_VAR(Vars::ESP::Main::DormantSoundESP);
 		LOAD_VAR(Vars::ESP::Main::DormantTime);
-		LOAD_VAR(Vars::ESP::Main::DormantDist);
-		LOAD_VAR(Vars::ESP::Main::NetworkedDist);
-			
-
 		LOAD_VAR(Vars::ESP::Players::Active);
-		LOAD_VAR(Vars::ESP::Players::ShowLocal);
+		LOAD_VAR(Vars::ESP::Players::IgnoreLocal);
 		LOAD_VAR(Vars::ESP::Players::IgnoreTeammates);
 		LOAD_VAR(Vars::ESP::Players::IgnoreCloaked);
 		LOAD_VAR(Vars::ESP::Players::Name);
 		LOAD_VAR(Vars::ESP::Players::NameCustom);
 		LOAD_OTHER(Vars::ESP::Players::NameColor);
-		LOAD_VAR(Vars::ESP::Players::NameBox);
 		LOAD_VAR(Vars::ESP::Players::Uber);
 		LOAD_VAR(Vars::ESP::Players::Class);
 		LOAD_VAR(Vars::ESP::Players::HealthText);
-		LOAD_VAR(Vars::ESP::Players::Cond);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Enabled);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Buffs);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Debuffs);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Other);
+		LOAD_VAR(Vars::ESP::Players::Conditions::LagComp);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Ping);
+		LOAD_VAR(Vars::ESP::Players::Conditions::KD);
 		LOAD_VAR(Vars::ESP::Players::HealthBar);
 		LOAD_VAR(Vars::ESP::Players::HealthBarStyle);
 		LOAD_VAR(Vars::ESP::Players::Box);
-		LOAD_VAR(Vars::ESP::Players::Choked);
-		LOAD_VAR(Vars::ESP::Players::GUID);
 		LOAD_VAR(Vars::ESP::Players::Alpha);
-		LOAD_VAR(Vars::ESP::Players::Lines);
 		LOAD_VAR(Vars::ESP::Players::Bones);
-		LOAD_VAR(Vars::ESP::Players::Dlights);
-		LOAD_VAR(Vars::ESP::Players::DlightRadius);
-		LOAD_VAR(Vars::ESP::Players::CheaterDetection);
+		LOAD_VAR(Vars::ESP::Players::PriorityText);
 		LOAD_VAR(Vars::ESP::Players::WeaponIcon);
 		LOAD_VAR(Vars::ESP::Players::WeaponText);
 		LOAD_VAR(Vars::ESP::Players::SniperSightlines);
@@ -1473,7 +1300,6 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::ESP::Buildings::Name);
 		LOAD_VAR(Vars::ESP::Buildings::NameCustom);
 		LOAD_OTHER(Vars::ESP::Buildings::NameColor);
-		LOAD_VAR(Vars::ESP::Buildings::NameBox);
 		LOAD_VAR(Vars::ESP::Buildings::Health);
 		LOAD_VAR(Vars::ESP::Buildings::Owner);
 		LOAD_VAR(Vars::ESP::Buildings::Level);
@@ -1481,10 +1307,6 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::ESP::Buildings::HealthBar);
 		LOAD_VAR(Vars::ESP::Buildings::Box);
 		LOAD_VAR(Vars::ESP::Buildings::Alpha);
-		LOAD_VAR(Vars::ESP::Buildings::Dlights);
-		LOAD_VAR(Vars::ESP::Buildings::DlightRadius);
-		LOAD_VAR(Vars::ESP::Buildings::TeleExitDir);
-		LOAD_OTHER(Vars::ESP::Buildings::TeleExitDirColor);
 		LOAD_VAR(Vars::ESP::World::Active);
 
 		LOAD_VAR(Vars::ESP::World::HealthName);
@@ -1511,10 +1333,11 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Chams::Players::Active);
 		LOAD_VAR(Vars::Chams::Players::Wearables);
 		LOAD_VAR(Vars::Chams::Players::Weapons);
-		LOAD_VAR(Vars::Chams::Players::FadeoutTeammates);
+		LOAD_VAR(Vars::Chams::Players::EnemyOnly);
 		LOAD_VAR(Vars::Chams::Buildings::Active);
 		LOAD_VAR(Vars::Chams::Buildings::Material);
 		LOAD_VAR(Vars::Chams::Buildings::IgnoreZ);
+		LOAD_VAR(Vars::Chams::Buildings::EnemyOnly);
 		LOAD_VAR(Vars::Chams::World::Active);
 		LOAD_VAR(Vars::Chams::DME::Active);
 		LOAD_VAR(Vars::Chams::DME::HandsGlowOverlay);
@@ -1552,11 +1375,11 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Glow::World::Projectiles);
 		LOAD_VAR(Vars::Glow::World::Alpha);
 		LOAD_VAR(Vars::Radar::Main::Active);
+		LOAD_VAR(Vars::Radar::Main::NoTitleGradient);
 		LOAD_VAR(Vars::Radar::Main::BackAlpha);
 		LOAD_VAR(Vars::Radar::Main::LineAlpha);
 		LOAD_VAR(Vars::Radar::Main::Range);
 		LOAD_VAR(Vars::Radar::Players::Active);
-		LOAD_VAR(Vars::Radar::Main::NoTitleGradient);
 		LOAD_VAR(Vars::Radar::Players::IconType);
 		LOAD_VAR(Vars::Radar::Players::BackGroundType);
 		LOAD_VAR(Vars::Radar::Players::Outline);
@@ -1571,7 +1394,8 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Radar::World::Active);
 		LOAD_VAR(Vars::Radar::World::Health);
 		LOAD_VAR(Vars::Radar::World::Ammo);
-		LOAD_VAR(Vars::Visuals::FadeOutFoV);
+		LOAD_VAR(Vars::Visuals::ScoreboardColours);
+		LOAD_VAR(Vars::Visuals::MenuCelebration);
 		LOAD_VAR(Vars::Visuals::CleanScreenshots);
 		LOAD_VAR(Vars::Visuals::RemoveMOTD);
 		LOAD_VAR(Vars::Visuals::RemoveDisguises);
@@ -1582,37 +1406,21 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Visuals::RemoveScreenOverlays);
 		LOAD_VAR(Vars::Visuals::RemoveDSP);
 		LOAD_VAR(Vars::Visuals::RemoveConvarQueries);
-		LOAD_VAR(Vars::Visuals::VisualOverlay);
 		LOAD_VAR(Vars::Visuals::PreventForcedAngles);
 		LOAD_VAR(Vars::Visuals::FieldOfView);
 		LOAD_VAR(Vars::Visuals::AimFOVAlpha);
 		LOAD_VAR(Vars::Visuals::RemoveScope);
 		LOAD_VAR(Vars::Visuals::RemoveRagdolls);
 		LOAD_VAR(Vars::Visuals::PickupTimers);
-		LOAD_VAR(Vars::Visuals::ScopeLines);
 		LOAD_VAR(Vars::Visuals::RemoveZoom);
 		LOAD_VAR(Vars::Visuals::RemovePunch);
 		LOAD_VAR(Vars::Visuals::CrosshairAimPos);
 		LOAD_VAR(Vars::Visuals::ChatInfoText);
 		LOAD_VAR(Vars::Visuals::ChatInfoChat);
-		LOAD_VAR(Vars::Visuals::ChatInfoGrayScale);
 		LOAD_VAR(Vars::Visuals::OutOfFOVArrowsOutline);
 		LOAD_VAR(Vars::Visuals::SpectatorList);
 
-		LOAD_VAR(Vars::Visuals::CameraMode);
-		LOAD_VAR(Vars::Visuals::CameraFOV);
-
-		LOAD_VAR(Vars::Visuals::SpyWarning);
-		LOAD_VAR(Vars::Visuals::SpyWarningAnnounce);
-		LOAD_VAR(Vars::Visuals::SpyWarningStyle);
-		LOAD_VAR(Vars::Visuals::SpyWarningVisibleOnly);
-		LOAD_VAR(Vars::Visuals::SpyWarningIgnoreFriends);
-
-		LOAD_VAR(Vars::Visuals::Snow);
-		LOAD_VAR(Vars::Visuals::ToolTips);
-
 		LOAD_VAR(Vars::Visuals::ThirdPerson);
-		
 		LOAD_VAR(Vars::Visuals::ThirdPersonSilentAngles);
 		LOAD_VAR(Vars::Visuals::ThirdPersonInstantYaw);
 		LOAD_VAR(Vars::Visuals::ThirdPersonServerHitbox);
@@ -1620,23 +1428,21 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Visuals::ThirdpersonDist);
 		LOAD_VAR(Vars::Visuals::ThirdpersonRight);
 		LOAD_VAR(Vars::Visuals::ThirdpersonUp);
-		
-		
 		LOAD_VAR(Vars::Visuals::ThirdpersonCrosshair);
 
 		LOAD_VAR(Vars::Visuals::WorldModulation);
 		LOAD_VAR(Vars::Visuals::SkyModulation);
 		LOAD_VAR(Vars::Visuals::PropWireframe);
 		LOAD_VAR(Vars::Visuals::SkyboxChanger);
-		LOAD_VAR(Vars::Visuals::ParticleColors);
-		LOAD_VAR(Vars::Visuals::RGBParticles);
-		LOAD_VAR(Vars::Visuals::RainbowSpeed);
-		LOAD_VAR(Vars::Visuals::ParticleTracer);
+		LOAD_VAR(Vars::Visuals::Particles::Colors::Type);
+		LOAD_VAR(Vars::Visuals::Particles::Colors::RainbowSpeed);
+		LOAD_VAR(Vars::Visuals::Particles::Feet::Enabled);
+		LOAD_VAR(Vars::Visuals::Particles::Feet::ColorType);
+		LOAD_VAR(Vars::Visuals::Particles::Feet::DashOnly);
+		LOAD_VAR(Vars::Visuals::Particles::Tracers::ParticleTracer);
 		LOAD_VAR(Vars::Visuals::BulletTracer);
 		LOAD_VAR(Vars::Visuals::BulletTracerRainbow);
-		LOAD_VAR(Vars::Visuals::HalloweenSpellFootsteps);
-		LOAD_VAR(Vars::Visuals::ColorType);
-		LOAD_VAR(Vars::Visuals::DashOnly);
+		LOAD_STRING(Vars::Visuals::Particles::Tracers::ParticleName);
 		LOAD_VAR(Vars::Visuals::AimbotViewmodel);
 		LOAD_VAR(Vars::Visuals::ViewmodelSway);
 		LOAD_VAR(Vars::Visuals::ViewmodelSwayInterp);
@@ -1655,20 +1461,14 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Visuals::MaxDist);
 		LOAD_VAR(Vars::Visuals::MinDist);
 		LOAD_VAR(Vars::Visuals::FovArrowsDist);
-		LOAD_VAR(Vars::Visuals::AimPosSquare);
 		LOAD_VAR(Vars::Visuals::NotificationLifetime);
 		LOAD_VAR(Vars::Visuals::DamageLoggerText);
 		LOAD_VAR(Vars::Visuals::DamageLoggerChat);
 		LOAD_VAR(Vars::Visuals::DamageLoggerConsole);
-		LOAD_VAR(Vars::Visuals::VisionModifier);
-		LOAD_VAR(Vars::Visuals::Rain);
-		LOAD_VAR(Vars::Debug::DebugInfo);
 		LOAD_VAR(Vars::Visuals::DoPostProcessing);
 		LOAD_VAR(Vars::Visuals::EquipRegionUnlock);
 
 		LOAD_VAR(Vars::Visuals::NoStaticPropFade);
-		LOAD_VAR(Vars::Misc::AntiViewmodelFlip);
-		LOAD_VAR(Vars::Visuals::ParticlesIgnoreZ);
 
 		LOAD_VAR(Vars::Visuals::Beans::Active);
 		LOAD_VAR(Vars::Visuals::Beans::Rainbow);
@@ -1690,22 +1490,17 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Visuals::RagdollEffects::BecomeAsh);
 		LOAD_VAR(Vars::Visuals::RagdollEffects::Dissolve);
 		LOAD_VAR(Vars::Visuals::RagdollEffects::RagdollType);
-		LOAD_VAR(Vars::Visuals::Fog::CustomFog);
-		LOAD_VAR(Vars::Visuals::Fog::FogDensity);
-		LOAD_VAR(Vars::Visuals::Fog::FogDensitySkybox);
-		LOAD_VAR(Vars::Visuals::Fog::FogStart);
-		LOAD_VAR(Vars::Visuals::Fog::FogStartSkybox);
-		LOAD_VAR(Vars::Visuals::Fog::FogEnd);
-		LOAD_VAR(Vars::Visuals::Fog::FogEndSkybox);
-		LOAD_OTHER(Vars::Visuals::Fog::FogColor);
-		LOAD_OTHER(Vars::Visuals::Fog::FogColorSkybox);
-		
-		LOAD_OTHER(Vars::Menu::Colors::MenuAccent);
+		LOAD_VAR(Vars::Visuals::RagdollEffects::SeparateVectors);
+		LOAD_VAR(Vars::Visuals::RagdollEffects::RagdollForce);
+		LOAD_VAR(Vars::Visuals::RagdollEffects::RagdollForceForwards);
+		LOAD_VAR(Vars::Visuals::RagdollEffects::RagdollForceSides);
+		LOAD_VAR(Vars::Visuals::RagdollEffects::RagdollForceUp);
+
+		LOAD_OTHER(Vars::Menu::MenuAccent);
 
 		LOAD_OTHER(Colors::OutlineESP);
 		LOAD_OTHER(Colors::DTBarIndicatorsCharged);
 		LOAD_OTHER(Colors::DTBarIndicatorsCharging);
-		LOAD_OTHER(Colors::ChokedBar);
 		LOAD_OTHER(Colors::GradientHealthBar);
 		LOAD_OTHER(Colors::GradientOverhealBar);
 		LOAD_OTHER(Colors::Cond);
@@ -1744,12 +1539,9 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_OTHER(Colors::NotifOutline);
 		LOAD_OTHER(Colors::NotifText);
 		LOAD_OTHER(Colors::WeaponIcon);
-		LOAD_OTHER(Colors::NoscopeLines1);
-		LOAD_OTHER(Colors::NoscopeLines2);
 		LOAD_OTHER(Colors::bonecolor);
 		LOAD_OTHER(Colors::HitboxFace);
 		LOAD_OTHER(Colors::HitboxEdge);
-		LOAD_OTHER(Colors::FeetColor);
 
 		LOAD_OTHER(Vars::Chams::Players::Local);
 		LOAD_OTHER(Vars::Chams::Players::FakeAng);
@@ -1769,7 +1561,7 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 
 		LOAD_OTHER(Vars::Chams::World::Health);
 		LOAD_OTHER(Vars::Chams::World::Ammo);
-		LOAD_OTHER(Vars::Chams::World::Projectiles);
+		LOAD_OTHER(Vars::Chams::World::Projectiles::Projectiles);
 		LOAD_OTHER(Vars::Skybox::SkyboxNum);
 		LOAD_STRING(Vars::Skybox::SkyboxName);
 		LOAD_STRING(Vars::Fonts::FONT_ESP::szName);
@@ -1796,7 +1588,7 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::Fonts::FONT_INDICATORS::nTall);
 		LOAD_VAR(Vars::Fonts::FONT_INDICATORS::nWeight);
 		LOAD_VAR(Vars::Fonts::FONT_INDICATORS::nFlags);
-		
+
 		g_Draw.RemakeFonts
 		({
 			{0x0, Vars::Fonts::FONT_ESP::szName.c_str(), Vars::Fonts::FONT_ESP::nTall.Value, Vars::Fonts::FONT_ESP::nWeight.Value, Vars::Fonts::FONT_ESP::nFlags.Value},
@@ -1810,6 +1602,7 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		 });
 
 		CurrentVisuals = configName;
+		F::Notifications.Add("Visual Config " + configName + " loaded");
 	}
 	catch (...)
 	{

@@ -30,14 +30,15 @@ struct SpriteRenderInfo_t
     void* m_pParticles{};
 };
 
-//rainbow speed!!! separated from other rainbow shit so that it doesnt mess with everything (pasted from utils)
+//rainbow speed!!! separated from other rainbow shit so that it doesnt mess with everything (directly pasted from utils)
 __inline Color_t Rainbow()
 {
+    float rainbowspeed = Vars::Visuals::Particles::Colors::RainbowSpeed.Value;
     return
     {
-        static_cast<byte>(floor(sin(I::GlobalVars->curtime * Vars::Visuals::RainbowSpeed.Value + 0.0f) * 127.0f + 128.0f)),
-        static_cast<byte>(floor(sin(I::GlobalVars->curtime * Vars::Visuals::RainbowSpeed.Value + 2.0f) * 127.0f + 128.0f)),
-        static_cast<byte>(floor(sin(I::GlobalVars->curtime * Vars::Visuals::RainbowSpeed.Value + 4.0f) * 127.0f + 128.0f)),
+        static_cast<byte>(floor(sin(I::GlobalVars->curtime * rainbowspeed + 0.0f) * 127.0f + 128.0f)),
+        static_cast<byte>(floor(sin(I::GlobalVars->curtime * rainbowspeed + 2.0f) * 127.0f + 128.0f)),
+        static_cast<byte>(floor(sin(I::GlobalVars->curtime * rainbowspeed + 4.0f) * 127.0f + 128.0f)),
         255
     };
 };
@@ -45,14 +46,13 @@ __inline Color_t Rainbow()
 MAKE_HOOK(C_OP_RenderSprites_RenderSpriteCard, g_Pattern.Find(L"client.dll", L"55 8B EC 83 EC 28 56 8B 75 10 57 8B 7D 14 8B C7 99 83 E7 03 83 E2 03"), void, __fastcall, 
         void* ecx, void* edx, void* meshBuilder, void* pCtx, SpriteRenderInfo_t& info, int hParticle, void* pSortList, void* pCamera)
 {
-    #define colors Colors::ParticleColor
-    #define rainbow Vars::Visuals::RGBParticles.Value
+    Color_t colors = Vars::Visuals::Particles::Colors::Type.Value == 1 ? Colors::ParticleColor : Rainbow();
 
-    if (Vars::Visuals::ParticleColors.Value == true)
+    if (Vars::Visuals::Particles::Colors::Type.Value)
     {
-        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 0].m128_f32[hParticle & 0x3] = Color::TOFLOAT(rainbow ? Rainbow().r : colors.r); //red
-        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 1].m128_f32[hParticle & 0x3] = Color::TOFLOAT(rainbow ? Rainbow().g : colors.g); //green
-        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 2].m128_f32[hParticle & 0x3] = Color::TOFLOAT(rainbow ? Rainbow().b : colors.b); //blue
+        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 0].m128_f32[hParticle & 0x3] = Color::TOFLOAT(colors.r );
+        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 1].m128_f32[hParticle & 0x3] = Color::TOFLOAT(colors.g);
+        info.m_pRGB[((hParticle / 4) * info.m_nRGBStride) + 2].m128_f32[hParticle & 0x3] = Color::TOFLOAT(colors.b);
     }
 
     Hook.Original<FN>()(ecx, edx, meshBuilder, pCtx, info, hParticle, pSortList, pCamera);

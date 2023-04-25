@@ -75,7 +75,6 @@ bool CAimbotGlobal::ShouldIgnore(CBaseEntity* pTarget, bool hasMedigun)
 	if (!pTarget) { return true; }
 	if (!I::EngineClient->GetPlayerInfo(pTarget->GetIndex(), &pInfo)) { return true; }
 	if (pTarget->GetDormant()) { return true; }
-	if (Vars::Aimbot::Global::IgnoreOptions.Value & (CLOAKED) && pTarget->IsVisible()) { return true; }
 	if (Vars::Aimbot::Global::IgnoreOptions.Value & (DEADRINGER) && pTarget->GetFeignDeathReady()) { return true; }
 	if (Vars::Aimbot::Global::IgnoreOptions.Value & (TAUNTING) && pTarget->IsTaunting()) { return true; }
 	if (Vars::Aimbot::Global::IgnoreOptions.Value & (DISGUISED) && pTarget->IsDisguised()) { return true; }
@@ -85,6 +84,14 @@ bool CAimbotGlobal::ShouldIgnore(CBaseEntity* pTarget, bool hasMedigun)
 	{
 		if (G::CurItemDefIndex != Heavy_t_TheHolidayPunch)
 			return true;
+	}
+
+	if (Vars::Aimbot::Global::IgnoreOptions.Value & (CLOAKED) && pTarget->IsVisible())
+	{
+		if (pTarget->GetInvisPercentage() > Vars::Aimbot::Global::IgnoreCloakPercentage.Value)
+		{
+			return true;
+		}
 	}
 
 	// Special conditions for mediguns //

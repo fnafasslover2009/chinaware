@@ -40,7 +40,7 @@ struct Gradient_t
 struct Chams_t
 {
 	bool	showObstructed = false;
-	int		drawMaterial = 0;	// 1/shaded, 2/shiny, 3/flat, 4/wfshaded, 5/wfshiny, 6/wfflat, 7/fresnel, 8/brick
+	int		drawMaterial = 0;	// 1/shaded, 2/shiny, 3/flat, 4/wfshaded, 5/wfshiny, 6/wfflat, 7/fresnel, 8/brick 9/custom
 	int		overlayType = 0;
 	bool	chamsActive = true;	// start all chams as active because I don't trust this cheat.
 	bool	rainbow = false;
@@ -49,6 +49,8 @@ struct Chams_t
 	float	overlayIntensity = 1;
 	Color_t fresnelBase = { 0,0,0,255 };
 	Color_t colour = { 255, 255, 255, 255 };
+	Color_t BluColour = { 255, 255, 255, 255 }; //fuck the british
+	Color_t RedColour = { 255, 255, 255, 255 };
 	Color_t overlayColour = { 255, 255, 255, 255 };
 	std::string customMaterial = "None";
 };

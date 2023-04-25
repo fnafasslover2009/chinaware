@@ -13,7 +13,7 @@ int CBaseCombatWeapon::GetBulletAmount()
 	int bulletspershot = *(DWORD*)(v8 + v7 + 1788);
 	if (bulletspershot >= 1)
 	{
-		Utils::ATTRIB_HOOK_FLOAT(bulletspershot, "mult_bullets_per_shot", this, 0, true);
+		Utils::ATTRIB_HOOK_FLOAT(bulletspershot, "mult_bullets_per_shot", this);
 	}
 	else
 	{

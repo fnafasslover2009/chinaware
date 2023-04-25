@@ -95,7 +95,7 @@ void CPlayerList::Render()
 	if (ImGui::Begin("Playerlist", &Vars::Menu::ShowPlayerlist,
 		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
 	{
-		ImGui::PushFont(F::Menu.Verdana);
+		ImGui::PushFont(F::Menu.Calibri);
 		const auto winSize = ImVec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 		auto winPos = ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y);
 		ImGui::GradientRect(&F::Menu.TitleGradient, { winPos.x, winPos.y }, winSize.x, 3);

@@ -89,10 +89,8 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 	const Vec3 vLocalPos = pLocal->GetShootPos();
 	const Vec3 vLocalAngles = I::EngineClient->GetViewAngles();
 
-	const bool respectFOV = (sortMethod == ESortMethod::FOV) || (Vars::Aimbot::Hitscan::RespectFOV.Value);
-
 	// Players
-	if (Vars::Aimbot::Global::AimPlayers.Value)
+	if (Vars::Aimbot::Global::AimAt.Value & (ToAimAt::PLAYER))
 	{
 		int nHitbox = GetHitbox(pLocal, pWeapon);
 		const bool bIsMedigun = pWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN;
@@ -161,8 +159,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 			Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vPos);
 			const float flFOVTo = Math::CalcFov(vLocalAngles, vAngleTo);
 
-			// Should we respect the Aim FOV?
-			if (respectFOV && flFOVTo > Vars::Aimbot::Global::AimFOV.Value)
+			if (flFOVTo > Vars::Aimbot::Hitscan::AimFOV.Value)
 			{
 				continue;
 			}
@@ -179,10 +176,18 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 	}
 
 	// Buildings
-	if (Vars::Aimbot::Global::AimBuildings.Value)
+	if (Vars::Aimbot::Global::AimAt.Value)
 	{
 		for (const auto& pBuilding : g_EntityCache.GetGroup(EGroupType::BUILDINGS_ENEMIES))
 		{
+			bool isSentry = pBuilding->GetClassID() == ETFClassID::CObjectSentrygun;
+			bool isDispenser = pBuilding->GetClassID() == ETFClassID::CObjectDispenser;
+			bool isTeleporter = pBuilding->GetClassID() == ETFClassID::CObjectTeleporter;
+
+			if (!(Vars::Aimbot::Global::AimAt.Value & (ToAimAt::SENTRY)) && isSentry) { continue; }
+			if (!(Vars::Aimbot::Global::AimAt.Value & (ToAimAt::DISPENSER)) && isDispenser) { continue; }
+			if (!(Vars::Aimbot::Global::AimAt.Value & (ToAimAt::TELEPORTER)) && isTeleporter) { continue; }
+
 			// Is the building valid and alive?
 			if (!pBuilding || !pBuilding->IsAlive()) { continue; }
 
@@ -190,20 +195,19 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 			Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vPos);
 			const float flFOVTo = Math::CalcFov(vLocalAngles, vAngleTo);
 
-			// Should we respect the Aim FOV?
-			if (respectFOV && flFOVTo > Vars::Aimbot::Global::AimFOV.Value)
+			if (flFOVTo > Vars::Aimbot::Hitscan::AimFOV.Value)
 			{
 				continue;
 			}
 
 			// The target is valid! Add it to the target vector.
 			const float flDistTo = vLocalPos.DistTo(vPos);
-			validTargets.push_back({ pBuilding, ETargetType::BUILDING, vPos, vAngleTo, flFOVTo, flDistTo });
+			validTargets.push_back({ pBuilding, isSentry ? ETargetType::SENTRY : (isDispenser ? ETargetType::DISPENSER : ETargetType::TELEPORTER), vPos, vAngleTo, flFOVTo, flDistTo});
 		}
 	}
 
 	// Stickies
-	if (Vars::Aimbot::Global::AimStickies.Value)
+	if (Vars::Aimbot::Global::AimAt.Value & (ToAimAt::STICKY))
 	{
 		for (const auto& pProjectile : g_EntityCache.GetGroup(EGroupType::WORLD_PROJECTILES))
 		{
@@ -225,8 +229,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 			Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vPos);
 			const float flFOVTo = Math::CalcFov(vLocalAngles, vAngleTo);
 
-			// Should we respect the Aim FOV?
-			if (respectFOV && flFOVTo > Vars::Aimbot::Global::AimFOV.Value)
+			if (flFOVTo > Vars::Aimbot::Hitscan::AimFOV.Value)
 			{
 				continue;
 			}
@@ -238,7 +241,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 	}
 
 	// NPCs
-	if (Vars::Aimbot::Global::AimNPC.Value)
+	if (Vars::Aimbot::Global::AimAt.Value & (ToAimAt::NPC))
 	{
 		for (const auto& pNPC : g_EntityCache.GetGroup(EGroupType::WORLD_NPC))
 		{
@@ -246,8 +249,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 			Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vPos);
 			const float flFOVTo = Math::CalcFov(vLocalAngles, vAngleTo);
 
-			// Should we respect the Aim FOV?
-			if (respectFOV && flFOVTo > Vars::Aimbot::Global::AimFOV.Value)
+			if (flFOVTo > Vars::Aimbot::Hitscan::AimFOV.Value)
 			{
 				continue;
 			}
@@ -259,7 +261,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 	}
 
 	//Bombs
-	if (Vars::Aimbot::Global::AimBombs.Value)
+	if (Vars::Aimbot::Global::AimAt.Value & (ToAimAt::BOMB))
 	{
 		//TODO: Check if player is close enough to bomb to damage
 		for (const auto& pBomb : g_EntityCache.GetGroup(EGroupType::WORLD_BOMBS))
@@ -270,8 +272,7 @@ std::vector<Target_t> CAimbotHitscan::GetTargets(CBaseEntity* pLocal, CBaseComba
 			const float flFOVTo = Math::CalcFov(vLocalAngles, vAngleTo);
 			const float flDistTo = sortMethod == ESortMethod::DISTANCE ? vLocalPos.DistTo(vPos) : 0.0f;
 
-			// Should we respect the Aim FOV?
-			if (respectFOV && flFOVTo > Vars::Aimbot::Global::AimFOV.Value)
+			if (flFOVTo > Vars::Aimbot::Hitscan::AimFOV.Value)
 			{
 				continue;
 			}
@@ -368,7 +369,7 @@ bool CAimbotHitscan::ScanHitboxes(CBaseEntity* pLocal, Target_t& target)
 		}
 	}
 
-	else if (target.m_TargetType == ETargetType::BUILDING)
+	else if (target.m_TargetType == ETargetType::SENTRY || target.m_TargetType == ETargetType::DISPENSER || target.m_TargetType == ETargetType::TELEPORTER)
 	{
 		for (int nHitbox = 0; nHitbox < target.m_pEntity->GetNumOfHitboxes(); nHitbox++)
 		{
@@ -454,7 +455,9 @@ bool CAimbotHitscan::VerifyTarget(CBaseEntity* pLocal, Target_t& target)
 			}
 			return false;
 		}
-		case ETargetType::BUILDING:
+		case ETargetType::SENTRY:
+		case ETargetType::DISPENSER:
+		case ETargetType::TELEPORTER:
 		{
 			if (!Utils::VisPos(pLocal, target.m_pEntity, pLocal->GetShootPos(), target.m_vPos))
 			{
@@ -510,11 +513,7 @@ void CAimbotHitscan::Aim(CUserCmd* pCmd, Vec3& vAngle)
 	vAngle -= G::PunchAngles;
 	Math::ClampAngles(vAngle);
 
-	const int nAimMethod = (Vars::Aimbot::Hitscan::SpectatedSmooth.Value && G::LocalSpectated)
-		? 1
-		: Vars::Aimbot::Hitscan::AimMethod.Value;
-
-	switch (nAimMethod)
+	switch (Vars::Aimbot::Hitscan::AimMethod.Value)
 	{
 		case 0: //Plain
 		{
@@ -610,7 +609,7 @@ bool CAimbotHitscan::ShouldFire(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon,
 			if (Vars::Aimbot::Hitscan::WaitForCharge.Value && bIsScoped)
 			{
 				const int nHealth = target.m_pEntity->GetHealth();
-				const bool bIsCritBoosted = pLocal->IsCritBoostedNoMini();
+				const bool bIsCritBoosted = pLocal->IsCritBoosted();
 
 				if (target.m_nAimedHitbox == HITBOX_HEAD && G::CurItemDefIndex !=
 					Sniper_m_TheSydneySleeper)
@@ -676,11 +675,7 @@ bool CAimbotHitscan::ShouldFire(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon,
 		default: break;
 	}
 
-	const int nAimMethod = (Vars::Aimbot::Hitscan::SpectatedSmooth.Value && G::LocalSpectated)
-		? 1
-		: Vars::Aimbot::Hitscan::AimMethod.Value;
-
-	if (nAimMethod == 1)
+	if (Vars::Aimbot::Hitscan::AimMethod.Value == 1)
 	{
 		Vec3 vForward = {};
 		Math::AngleVectors(pCmd->viewangles, &vForward);
@@ -750,7 +745,7 @@ void CAimbotHitscan::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUserC
 	static int nLastTracerTick = pCmd->tick_count;
 	static int nextSafeTick = pCmd->tick_count;
 
-	if (!Vars::Aimbot::Global::Active.Value)
+	if (!Vars::Aimbot::Global::Active.Value || !Vars::Aimbot::Hitscan::Active.Value)
 	{
 		return;
 	}
@@ -799,12 +794,6 @@ void CAimbotHitscan::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUserC
 		G::CurrentTargetIdx = target.m_pEntity->GetIndex();
 		G::HitscanRunning = true;
 		G::HitscanSilentActive = Vars::Aimbot::Hitscan::AimMethod.Value == 2;
-
-		// Smooth if spectated
-		if (Vars::Aimbot::Hitscan::SpectatedSmooth.Value && G::LocalSpectated)
-		{
-			G::HitscanSilentActive = false;
-		}
 
 		if (G::HitscanSilentActive)
 		{

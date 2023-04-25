@@ -69,7 +69,7 @@ public:
 class CBaseEntity
 {
 public: //Netvars & conditions
-	M_DYNVARGET(NextNoiseMakerTime, float, this, "DT_TFPlayer", "m_Shared", "m_flNextNoiseMakerTime")
+		M_DYNVARGET(NextNoiseMakerTime, float, this, "DT_TFPlayer", "m_Shared", "m_flNextNoiseMakerTime")
 		M_DYNVARGET(FeignDeathReady, bool, this, "DT_TFPlayer", "m_Shared", "m_bFeignDeathReady")
 		M_DYNVARGET(StepSize, float, this, "DT_BasePlayer", "localdata", "m_flStepSize")
 		M_DYNVARGET(ConveyorSpeed, float, this, "DT_FuncConveyor", "m_flConveyorSpeed")
@@ -83,7 +83,7 @@ public: //Netvars & conditions
 		M_DYNVARGET(TickBase, int, this, "DT_BasePlayer", "localdata", "m_nTickBase")
 		M_DYNVARGET(SimulationTime, float, this, "DT_BaseEntity", "m_flSimulationTime")
 		M_DYNVARGET(OldSimulationTime, float, (this + 0x4), "DT_BaseEntity", "m_flSimulationTime");
-	M_DYNVARGET(hOwner, int, this, "DT_BaseEntity", "m_hOwnerEntity")
+		M_DYNVARGET(hOwner, int, this, "DT_BaseEntity", "m_hOwnerEntity")
 		M_DYNVARGET(Health, int, this, "DT_BasePlayer", "m_iHealth")
 		M_DYNVARGET(TeamNum, int, this, "DT_BaseEntity", "m_iTeamNum")
 		M_DYNVARGET(Flags, int, this, "DT_BasePlayer", "m_fFlags")
@@ -109,10 +109,12 @@ public: //Netvars & conditions
 		M_DYNVARGET(DamageRadius, float, this, "DT_BaseGrenade", "m_DmgRadius")
 		M_DYNVARGET(Streaks, int*, this, "DT_TFPlayer", "m_Shared", "m_nStreaks")
 		M_DYNVARGET(Crits, int, this, "DT_TFPlayer", "m_Shared", "tfsharedlocaldata", "m_ScoreData", "m_iCrits")
+		M_DYNVARGET(InvisCompleteTime, float, this, "DT_TFPlayer", "m_Shared", "m_flInvisChangeCompleteTime")
 
-		M_OFFSETGET(PipebombType, int, 0x8FC)
-		M_OFFSETGET(PipebombPulsed, bool, 0x908)	//	this is incredibly fucking lazy.
-		M_OFFSETGET(Touched, bool, 0x8F8)
+		M_OFFSETGET(PipebombType, int, 0x8F8)												//	4
+		M_OFFSETGET(PipebombPulsed, bool, 0x908)	//	this is incredibly fucking lazy.	//	16
+		M_OFFSETGET(Touched, bool, 0x8FC)													//	0
+		M_OFFSETGET(CreationTime, float, 0x900)	// type + 8
 		M_OFFSETGET(PunchAngles, Vec3, 0xE8C)
 		M_OFFSETGET(VecVelocity, Vec3, 0x120)
 		M_OFFSETGET(WaterJumpTime, float, 0x10FC)
@@ -130,7 +132,6 @@ public: //Netvars & conditions
 		M_CONDGET(InJarate, GetCond(), TFCond_Jarated)
 		M_CONDGET(Bleeding, GetCond(), TFCond_Bleeding)
 		M_CONDGET(Disguised, GetCond(), TFCond_Disguised)
-		M_CONDGET(Cloaked, GetCond(), TFCond_Cloaked)
 		M_CONDGET(Taunting, GetCond(), TFCond_Taunting)
 		M_CONDGET(OnFire, GetCond(), TFCond_OnFire)
 		M_CONDGET(Stunned, GetCond(), TFCond_Stunned)
@@ -281,6 +282,10 @@ public: //Everything else, lol.
 		return reinterpret_cast<size_t*>(this + dwOff);
 	}
 
+	__inline CCollisionProperty* GetCollision() {
+		return reinterpret_cast<CCollisionProperty*>(this + 0x1C8);
+	}
+
 	__inline bool* PDAman()
 	{
 		static auto dwOff = g_NetVars.get_offset("DT_TFPlayer", "m_bViewingCYOAPDA");
@@ -310,6 +315,20 @@ public: //Everything else, lol.
 		return FN(this, iAmmoIndex);
 	}
 
+	__inline float GetInvisPercentage()
+	{
+		const float invisTime = I::Cvar->FindVar("tf_spy_invis_time")->GetFloat();
+		const float GetInvisPercent = Math::RemapValClamped(GetInvisCompleteTime() - I::GlobalVars->curtime,
+			invisTime, 0.0f, 0.0f,
+			100.0f);
+
+		return GetInvisPercent;
+	}
+
+	__inline bool IsCloaked() // i dont put flickers in here because they are slightly visible, so it doesnt really count as cloaked to me
+	{
+		return GetCond() & TFCond_Cloaked || GetCondEx() & TFCondEx2_Stealthed;
+	}
 
 	__inline CBaseEntity* GetGroundEntity()
 	{
@@ -521,7 +540,6 @@ public: //Everything else, lol.
 		int nCond = GetCond(), nCondEx = GetCondEx();
 
 		return (nCond & TFCond_Kritzkrieged ||
-				nCond & TFCond_MiniCrits ||
 				nCondEx & TFCondEx_CritCanteen ||
 				nCondEx & TFCondEx_CritOnFirstBlood ||
 				nCondEx & TFCondEx_CritOnWin ||
@@ -533,37 +551,21 @@ public: //Everything else, lol.
 				IsCritTempRune());
 	}
 
-	__inline bool IsCritBoostedNoMini()
+	__inline const char* GetRune()
 	{
-		int nCond = GetCond(), nCondEx = GetCondEx();
-
-		return (nCond & TFCond_Kritzkrieged ||
-				nCondEx & TFCondEx_CritCanteen ||
-				nCondEx & TFCondEx_CritOnFirstBlood ||
-				nCondEx & TFCondEx_CritOnWin ||
-				nCondEx & TFCondEx_CritOnKill ||
-				nCondEx & TFCondEx_CritDemoCharge ||
-				nCondEx & TFCondEx_CritOnFlagCapture ||
-				nCondEx & TFCondEx_HalloweenCritCandy ||
-				nCondEx & TFCondEx_PyroCrits ||
-				IsCritTempRune());
-	}
-
-	__inline const wchar_t* GetRune()
-	{
-		if (IsStrengthRune()) { return (L"Strength Rune"); }
-		if (IsHasteRune()) { return (L"Haste Rune"); }
-		if (IsRegenRune()) { return (L"Regen Rune"); }
-		if (IsResistRune()) { return (L"Resist Rune"); }
-		if (IsVampireRune()) { return (L"Vampire Rune"); }
-		if (IsReflectRune()) { return (L"Reflect Rune"); }
-		if (IsPrecisionRune()) { return (L"Precision Rune"); }
-		if (IsAgilityRune()) { return (L"Agility Rune"); }
-		if (IsKnockoutRune()) { return (L"Knockout Rune"); }
-		if (IsImbalanceRune()) { return (L"Imbalance Rune"); }
-		if (IsKingRune()) { return (L"King"); }
-		if (IsPlagueRune()) { return (L"Plague Rune"); }
-		if (IsSupernovaRune()) { return (L"Supernova Rune"); }
+		if (IsStrengthRune()) { return "Strength Rune"; }
+		if (IsHasteRune()) { return "Haste Rune"; }
+		if (IsRegenRune()) { return "Regen Rune"; }
+		if (IsResistRune()) { return "Resist Rune"; }
+		if (IsVampireRune()) { return "Vampire Rune"; }
+		if (IsReflectRune()) { return "Reflect Rune"; }
+		if (IsPrecisionRune()) { return "Precision Rune"; }
+		if (IsAgilityRune()) { return "Agility Rune"; }
+		if (IsKnockoutRune()) { return "Knockout Rune"; }
+		if (IsImbalanceRune()) { return "Imbalance Rune"; }
+		if (IsKingRune()) { return "King"; }
+		if (IsPlagueRune()) { return "Plague Rune"; }
+		if (IsSupernovaRune()) { return "Supernova Rune"; }
 		return nullptr;
 	}
 

@@ -102,7 +102,6 @@ void CTickshiftHandler::CLMove(float accumulated_extra_samples, bool bFinalTick)
 	while (iAvailableTicks > Vars::Misc::CL_Move::DTTicks.Value) { CLMoveFunc(accumulated_extra_samples, false); } //	skim any excess ticks
 
 	iAvailableTicks++; //	since we now have full control over CL_Move, increment.
-	iPredicted++;
 	G::ShiftedTicks = iAvailableTicks;
 	if (iAvailableTicks <= 0)
 	{
@@ -125,7 +124,7 @@ void CTickshiftHandler::CLMove(float accumulated_extra_samples, bool bFinalTick)
 		return;
 	}
 
-	if (iDeficit && iAvailableTicks < 22 && Vars::Misc::CL_Move::AutoRetain.Value && G::ShiftedTicks > 1) {
+	if (iDeficit && iAvailableTicks < 22 && Vars::Misc::CL_Move::AutoRetain.Value) {
 		iDeficit--;
 		return;
 	}
@@ -136,7 +135,7 @@ void CTickshiftHandler::CLMove(float accumulated_extra_samples, bool bFinalTick)
 		if (iAvailableTicks <= Vars::Misc::CL_Move::DTTicks.Value) { return; }
 		bRecharge = false;
 		G::RechargeQueued = false;
-		G::WaitForShift = iTickRate - Vars::Misc::CL_Move::DTTicks.Value;
+		G::WaitForShift = Vars::Misc::CL_Move::DTTicks.Value;
 	}
 
 	if (bDoubletap)
@@ -181,17 +180,17 @@ void CTickshiftHandler::CreateMove(CUserCmd* pCmd)
 void CTickshiftHandler::Reset()
 {
 	bSpeedhack = bDoubletap = bRecharge = bTeleport = false;
-	iAvailableTicks = 0; iPredicted = 0;
+	iAvailableTicks = 0; //iPredicted = 0;
 	iNextPassiveTick = 0;
 	iTickRate = round(1.f / I::GlobalVars->interval_per_tick);
 }
 
-void CTickshiftHandler::DrawDebug()
-{
-	int yoffset = 50, xoffset = 960;
-	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "TickShift Handler (DEBUG)");
-	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Predicted Storage = %d", iPredicted);
-	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Reported Storage = %d", iAvailableTicks);
-	const int iDelta = fabs(iPredicted - iAvailableTicks);
-	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Delta Storages = %d", iDelta);
-}
+//void CTickshiftHandler::DrawDebug()
+//{
+//	int yoffset = 50, xoffset = 960;
+//	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "TickShift Handler (DEBUG)");
+//	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Predicted Storage = %d", iPredicted);
+//	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Reported Storage = %d", iAvailableTicks);
+//	const int iDelta = fabs(iPredicted - iAvailableTicks);
+//	g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 255, 255, 225, 255 }, ALIGN_CENTER, "Delta Storages = %d", iDelta);
+//}

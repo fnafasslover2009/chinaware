@@ -1,6 +1,6 @@
 #include "Visuals.h"
 #include "../Vars.h"
-#include "../ESP/ESP.h"
+#include "../ESP/LocalConditions/LocalConditions.h"
 
 void CVisuals::DrawHitboxMatrix(CBaseEntity* pEntity, Color_t colourface, Color_t colouredge, float time)
 {
@@ -37,23 +37,6 @@ void CVisuals::DrawHitboxMatrix(CBaseEntity* pEntity, Color_t colourface, Color_
 	}
 }
 
-void CVisuals::ScopeLines(CBaseEntity* pLocal)
-{
-	if (pLocal->IsScoped() && Vars::Visuals::RemoveScope.Value && Vars::Visuals::ScopeLines.Value)
-	{
-		const int centerX = g_ScreenSize.w / 2;
-		const int centerY = g_ScreenSize.h / 2;
-		const Color_t line1 = { Colors::NoscopeLines1.r, Colors::NoscopeLines1.g, Colors::NoscopeLines1.b, 255 };
-		const Color_t line2 = { Colors::NoscopeLines2.r, Colors::NoscopeLines2.g, Colors::NoscopeLines2.b, 255 };
-
-		g_Draw.GradientRect(g_ScreenSize.w / 2, centerY - 1, g_ScreenSize.w, centerY + 1, line1, line2, true);
-		g_Draw.GradientRect(0, centerY - 1, centerX, centerY + 1, line2, line1, true);
-		g_Draw.GradientRect(centerX - 1, 0, centerX + 1, centerY, line2, line1, false);
-		g_Draw.GradientRect(centerX - 1, centerY, centerX + 1, g_ScreenSize.h, line1, line2, false);
-
-	}
-}
-
 void CVisuals::DrawOnScreenConditions(CBaseEntity* pLocal)
 {
 	// check
@@ -63,14 +46,14 @@ void CVisuals::DrawOnScreenConditions(CBaseEntity* pLocal)
 	const int x = Vars::Visuals::OnScreenConditions.c;
 	int y = Vars::Visuals::OnScreenConditions.y;
 
-	std::vector<std::wstring> conditionsVec = F::ESP.GetPlayerConds(pLocal);
+	std::vector<std::wstring> conditionsVec = F::LocalConditions.GetPlayerConditions(pLocal);
 
 	int nTextOffset = g_Draw.m_vecFonts[FONT_MENU].nTall;
 	//int longestText = 40;
 	int width, height;
 	for (const std::wstring& cond : conditionsVec)
 	{
-		g_Draw.String(FONT_MENU, x, y + nTextOffset, { 255, 255, 255, 255 }, ALIGN_CENTER, cond.data());
+		g_Draw.String(FONT_MENU, x , y + nTextOffset, { 255, 255, 255, 255 }, ALIGN_CENTER, cond.data());
 		I::VGuiSurface->GetTextSize(g_Draw.m_vecFonts[FONT_MENU].dwFont, cond.data(), width, height);
 		//if (width > longestText)
 		//{
@@ -84,9 +67,8 @@ void CVisuals::DrawOnScreenConditions(CBaseEntity* pLocal)
 	//ConditionH = y + nTextOffset;
 }
 
-void CVisuals::DrawOnScreenPing(CBaseEntity* pLocal){
+void CVisuals::DrawOnScreenPing(CBaseEntity* pLocal) {
 	if (!Vars::Visuals::DrawOnScreenPing.Value) { return; }
-	if (!pLocal->IsAlive() || pLocal->IsAGhost()) { return; }
 
 	CTFPlayerResource* cResource = g_EntityCache.GetPR();
 	if (!cResource) { return; }
@@ -95,6 +77,7 @@ void CVisuals::DrawOnScreenPing(CBaseEntity* pLocal){
 	if (!iNetChan) { return; }
 
 	const float flLatencyReal = (iNetChan->GetLatency(FLOW_INCOMING) + iNetChan->GetLatency(FLOW_OUTGOING)) * 1000;
+	const int flFakeLatency = Vars::Backtrack::Latency.Value;
 	const int flLatencyScoreBoard = cResource->GetPing(pLocal->GetIndex());
 
 	const int x = Vars::Visuals::OnScreenPing.x;
@@ -103,8 +86,15 @@ void CVisuals::DrawOnScreenPing(CBaseEntity* pLocal){
 
 	const int nTextOffset = g_Draw.m_vecFonts[FONT_MENU].nTall;
 	{
-		g_Draw.String(FONT_MENU, x, y, {255, 255, 255, 255 }, ALIGN_DEFAULT, "ping real : %.0f", flLatencyReal);
-		g_Draw.String(FONT_MENU, x, y + h - nTextOffset, {255, 255, 255, 255 }, ALIGN_DEFAULT,	"ping scoreboard : %d", flLatencyScoreBoard);
+	//	if (Vars::Backtrack::Enabled.Value)
+	//	{
+	//		g_Draw.String2(FONT_MENU, x, y, { 255, 255, 255, 255 }, ALIGN_DEFAULT, "Real %.0f", "(+ %d) ms", flLatencyReal, flFakeLatency);
+	//	}
+	//	else
+	//	{
+			g_Draw.String(FONT_INDICATORS, x + 20, y, { 255, 255, 255, 255 }, ALIGN_DEFAULT, "Real %.0f ms", flLatencyReal);
+	//	}
+		g_Draw.String(FONT_INDICATORS, x, y + h - nTextOffset, { 255, 255, 255, 255 }, ALIGN_DEFAULT, "Scoreboard %d ms", flLatencyScoreBoard);
 	}
 }
 
@@ -181,7 +171,7 @@ void CVisuals::FOV(CViewSetup* pView)
 
 	if (pLocal && pView)
 	{
-		if (pLocal->GetObserverMode() == OBS_MODE_FIRSTPERSON || (pLocal->IsScoped() && !Vars::Visuals::RemoveZoom.Value))
+		if (pLocal->IsScoped() && !Vars::Visuals::RemoveZoom.Value)
 		{
 			return;
 		}
@@ -332,7 +322,7 @@ void CVisuals::DrawDebugInfo(CBaseEntity* pLocal)
 
 		{
 			g_Draw.String(FONT_INDICATORS, xoffset, yoffset += 15, Utils::Rainbow(), ALIGN_DEFAULT, "Fedoraware");
-		} 
+		}
 		{
 			g_Draw.String(FONT_MENU, xoffset, yoffset += 15, { 119, 255, 225, 255 }, ALIGN_DEFAULT, "Local Player"); // header
 		}
@@ -391,7 +381,6 @@ void CVisuals::DrawTickbaseInfo(CBaseEntity* pLocal)
 	//Tickbase info
 	if (Vars::Misc::CL_Move::Enabled.Value && Vars::Misc::CL_Move::DTBarStyle.Value)
 	{
-
 		const auto& pWeapon = g_EntityCache.GetWeapon();
 
 		if (pWeapon)
@@ -432,7 +421,7 @@ void CVisuals::DrawTickbaseInfo(CBaseEntity* pLocal)
 						g_Draw.RoundedBoxStatic(DTBox.x, DTBox.y, DTBox.w, DTBox.h, 4, Colors::DtOutline);
 						if (G::ShiftedTicks && ratioCurrent)
 						{
-							g_Draw.RoundedBoxStatic(DTBox.x + 2, DTBox.y + 2, ratioCurrent * (DTBox.w - 4), DTBox.h - 4, 4, Vars::Menu::Colors::MenuAccent);
+							g_Draw.RoundedBoxStatic(DTBox.x + 2, DTBox.y + 2, ratioCurrent * (DTBox.w - 4), DTBox.h - 4, 4, Vars::Menu::MenuAccent);
 						}
 						if (G::WaitForShift)
 						{
@@ -459,7 +448,11 @@ void CVisuals::DrawTickbaseInfo(CBaseEntity* pLocal)
 						{
 							g_Draw.String(FONT_INDICATORS, DTBox.x + DTBox.w, DTBox.y - 10, { 255, 46, 46, 255 }, ALIGN_REVERSE, L"DT IMPOSSIBLE");
 						}
-						else	// ready
+						else if (Vars::Misc::CL_Move::NotInAir.Value && !pLocal->OnSolid())
+						{
+							g_Draw.String(FONT_INDICATORS, DTBox.x + DTBox.w, DTBox.y - 10, { 255, 46, 46, 255 }, ALIGN_REVERSE, L"NOT ON GROUND");
+						}
+						else	// ready 
 						{
 							g_Draw.String(FONT_INDICATORS, DTBox.x + DTBox.w, DTBox.y - 10, { 66, 255, 0, 255 }, ALIGN_REVERSE, L"READY");
 						}
@@ -486,11 +479,45 @@ void CVisuals::DrawTickbaseInfo(CBaseEntity* pLocal)
 						g_Draw.String(FONT_INDICATORS, DTBox.c, DTBox.y - 3, { 255, 255, 255, 255 }, ALIGN_CENTERHORIZONTAL, L"%i/%i", G::ShiftedTicks, Vars::Misc::CL_Move::DTTicks.Value);
 						break;
 					}
-						//hhhs0j — Today at 15:19
-						//Add a dt indicator but only with numbers
+					case 6: // deadflag2 (ascendeds1on gave me this) - was originally made by cardinal
+					{
 
+						int w = 80;
+						int h = 3;
+						int offset = 100;
+						int x = g_ScreenSize.c - w / 2;
+						int y = g_ScreenSize.h / 2 + offset;
+						const float ratio = std::clamp(( (float) (G::ShiftedTicks) / Vars::Misc::CL_Move::DTTicks.Value), 0.0f, 1.0f); // ratioInterp is jittery so we will use this.
+
+						g_Draw.GradientRectWH(x - 1, y - 1, w + 2, h + 2, { 35, 35, 35, 255 }, { 20, 20, 20, 255 }, false);
+						g_Draw.OutlinedRect(x - 1, y - 1, w + 2, h + 2, { 20, 20, 20, 255 });
+						g_Draw.GradientRectWH(x, y, w * ratio, h, { 163, 155, 215, 255 }, { 241, 199, 213, 255 }, true);
+
+						if (G::ShiftedTicks == 0 && !G::Recharging)
+						{
+							g_Draw.String(FONT_INDICATORS, g_ScreenSize.c, g_ScreenSize.h / 2 + offset + g_Draw.m_vecFonts[FONT_INDICATORS].nTall, { 191, 70, 70, 255 }, ALIGN_CENTERHORIZONTAL,
+								L"(RapidFire) Too Expensive %i < %i", 0 - G::ShiftedTicks, Vars::Misc::CL_Move::DTTicks.Value);
+
+							g_Draw.String(FONT_INDICATORS, g_ScreenSize.c, g_ScreenSize.h / 2 + offset + g_Draw.m_vecFonts[FONT_INDICATORS].nTall * 2, { 191, 70, 70, 255 }, ALIGN_CENTERHORIZONTAL,
+								L"", 0 - G::ShiftedTicks, Vars::Misc::CL_Move::DTTicks.Value);
+						}
+						else if (G::Recharging)
+						{
+							g_Draw.String(FONT_INDICATORS, g_ScreenSize.c, g_ScreenSize.h / 2 + offset + g_Draw.m_vecFonts[FONT_INDICATORS].nTall, { 191, 121, 50, 255 }, ALIGN_CENTERHORIZONTAL,
+								L"(Recharging) %i/%i", Vars::Misc::CL_Move::DTTicks.Value - G::ShiftedTicks, Vars::Misc::CL_Move::DTTicks.Value);
+						}
+						else if (G::WaitForShift)
+						{
+							g_Draw.String(FONT_INDICATORS, g_ScreenSize.c, g_ScreenSize.h / 2 + offset + g_Draw.m_vecFonts[FONT_INDICATORS].nTall, { 191, 121, 50, 255 }, ALIGN_CENTERHORIZONTAL,
+								L"(RapidFire) Wait %i/%i", G::WaitForShift, Vars::Misc::CL_Move::DTTicks.Value);
+						}
+						else
+						{
+							g_Draw.String(FONT_INDICATORS, g_ScreenSize.c, g_ScreenSize.h / 2 + offset + g_Draw.m_vecFonts[FONT_INDICATORS].nTall, { 60, 160, 110, 255 }, ALIGN_CENTERHORIZONTAL,
+								L"(RapidFire) Ready");
+						}
+					}
 				}
-
 			}
 		}
 	}
@@ -565,56 +592,6 @@ void CVisuals::DrawMenuSnow()
 
 			Color_t flakeColour = { 255, 255, 255, static_cast<byte>(Alpha * 255.0f) };
 			g_Draw.String(FONT_MENU, flake.position.first, flake.position.second, flakeColour, ALIGN_DEFAULT, "*");
-		}
-	}
-}
-
-void CVisuals::DrawDVD()
-{
-	{
-		static int iDVD = g_Draw.CreateTextureFromArray(DVDIcon::rawData, 237, 139);
-
-				// DVD Logo
-		if (iDVD && Vars::Menu::ShowDVD.Value)
-		{
-			static Vec2 logoPos = { 1, 1 };
-			static Vec2 logoVelocity = { 1, -1 };
-
-			if (logoPos.y <= 0 || logoPos.y >= (g_ScreenSize.h - DVDIcon::Height))
-			{
-				logoVelocity.y = -logoVelocity.y;
-			}
-			if (logoPos.x <= 0 || logoPos.x >= (g_ScreenSize.w - DVDIcon::Width))
-			{
-				logoVelocity.x = -logoVelocity.x;
-			}
-			logoPos += logoVelocity;
-
-			I::VGuiSurface->DrawSetTexture(iDVD);
-			I::VGuiSurface->DrawSetColor(Utils::Rainbow());
-			I::VGuiSurface->DrawTexturedRect(logoPos.x, logoPos.y, DVDIcon::Width, DVDIcon::Height);
-		}
-	}
-}
-
-void CVisuals::DrawPredictionLine()
-{
-	if (!G::PredictedPos.IsZero())
-	{
-		if (Vars::Visuals::AimPosSquare.Value)
-		{
-			Vec3 vProjAimStart, vProjAimEnd = Vec3(g_ScreenSize.c, g_ScreenSize.h, 0.0f);
-			if (Utils::W2S(G::LinearPredLine, vProjAimStart) && Utils::W2S(
-				G::PredictedPos, vProjAimEnd))
-			{
-				g_Draw.Line(
-					vProjAimStart.x,
-					vProjAimStart.y,
-					vProjAimEnd.x,
-					vProjAimEnd.y,
-					{ 255, 255, 255, 255 }
-				);
-			}
 		}
 	}
 }
@@ -720,28 +697,6 @@ void CVisuals::FillSightlines()
 	}
 }
 
-void CVisuals::SetVisionFlags()
-{
-	static ConVar* localplayer_visionflags = I::Cvar->FindVar("localplayer_visionflags");
-	if (localplayer_visionflags)
-	{
-		switch (Vars::Visuals::VisionModifier.Value)
-		{
-			case 1:
-				localplayer_visionflags->SetValue(1);
-				break;
-			case 2:
-				localplayer_visionflags->SetValue(2);
-				break;
-			case 3:
-				localplayer_visionflags->SetValue(4);
-				break;
-			default:
-				break;
-		}
-	}
-}
-
 void CVisuals::AddBulletTracer(const Vec3& vFrom, const Vec3& vTo, const Color_t& clr)
 {
 	m_vecBulletTracers.push_back({ vFrom, vTo, clr, I::GlobalVars->curtime });
@@ -817,11 +772,32 @@ void CVisuals::DrawProjectileTracer(CBaseEntity* pLocal, const Vec3& position)
 
 void CVisuals::DrawAimbotFOV(CBaseEntity* pLocal)
 {
+	float curFOV = 0.f;
+	if (Vars::Aimbot::Global::Active.Value)
+	{
+		switch (G::CurWeaponType)
+		{
+		case EWeaponType::HITSCAN:
+			if (Vars::Aimbot::Hitscan::Active.Value)
+				curFOV = Vars::Aimbot::Hitscan::AimFOV.Value;
+			break;
+		case EWeaponType::PROJECTILE:
+			if(Vars::Aimbot::Projectile::Active.Value)
+				curFOV = Vars::Aimbot::Projectile::AimFOV.Value;
+			break;
+		case EWeaponType::MELEE:
+			if (Vars::Aimbot::Melee::Active.Value)
+				curFOV = Vars::Aimbot::Melee::AimFOV.Value;
+			break;
+		default: curFOV = 0.f; break;
+		}
+	}
+
 	//Current Active Aimbot FOV
-	if (Vars::Visuals::AimFOVAlpha.Value && Vars::Aimbot::Global::AimFOV.Value)
+	if (Vars::Visuals::AimFOVAlpha.Value && curFOV)
 	{
 		const float flFOV = static_cast<float>(Vars::Visuals::FieldOfView.Value);
-		const float flR = tanf(DEG2RAD(Vars::Aimbot::Global::AimFOV.Value) / 2.0f)
+		const float flR = tanf(DEG2RAD(curFOV) / 2.0f)
 			/ tanf(
 			DEG2RAD((pLocal->IsScoped() && !Vars::Visuals::RemoveZoom.Value) ? 30.0f : flFOV) /
 			2.0f) * g_ScreenSize.w;
@@ -1037,35 +1013,38 @@ void CVisuals::RestoreWorldModulation() // keep this because its mentioned in @D
 
 // all world mod stuff above
 
-void CVisuals::OverrideWorldTextures()
+void CVisuals::OverrideWorldTextures() //This is 100% pasted from spook953
 {
-	static KeyValues* kv = nullptr;
-	if (!kv)
-	{
+	static KeyValues *kv = nullptr;
+
+	if (!kv) {
 		kv = new KeyValues("LightmappedGeneric");
-		kv->SetString("$basetexture", "dev/dev_measuregeneric01b");
+		kv->SetString("$basetexture", "vgui/white_additive");
+		kv->SetString("$color2", "[0.12 0.12 0.15]");
 	}
 
 	if (Vars::Visuals::OverrideWorldTextures.Value)
 	{
-		for (const auto& data : MaterialHandleDatas)
+		for (auto h = I::MaterialSystem->First(); h != I::MaterialSystem->Invalid(); h = I::MaterialSystem->Next(h))
 		{
-			if (data.Material == nullptr)
-			{
-				continue;
-			}
+			IMaterial *pMaterial = I::MaterialSystem->Get(h);
 
-			if (data.Material->IsTranslucent() || data.Material->IsSpriteCard() || data.GroupType != MaterialHandleData::EMatGroupType::GROUP_WORLD)
-			{
+			if (pMaterial->IsErrorMaterial() || !pMaterial->IsPrecached()
+				|| pMaterial->IsTranslucent() || pMaterial->IsSpriteCard()
+				|| std::string_view(pMaterial->GetTextureGroupName()).find("World") == std::string_view::npos)
 				continue;
-			}
 
-			if (!data.ShouldOverrideTextures)
-			{
+			std::string_view sName = std::string_view(pMaterial->GetName());
+
+			if (sName.find("water") != std::string_view::npos || sName.find("glass") != std::string_view::npos
+				|| sName.find("door") != std::string_view::npos || sName.find("tools") != std::string_view::npos
+				|| sName.find("player") != std::string_view::npos || sName.find("chicken") != std::string_view::npos
+				|| sName.find("wall28") != std::string_view::npos || sName.find("wall26") != std::string_view::npos
+				|| sName.find("decal") != std::string_view::npos || sName.find("overlay") != std::string_view::npos
+				|| sName.find("hay") != std::string_view::npos)
 				continue;
-			}
 
-			data.Material->SetShaderAndParams(kv);
+			pMaterial->SetShaderAndParams(kv);
 		}
 	}
 }
@@ -1094,197 +1073,4 @@ void CVisuals::PickupTimers()
 
 		++pickupData;
 	}
-}
-
-CClientClass* CVisuals::CPrecipitation::GetPrecipitationClass()
-{
-	static CClientClass* pReturn = nullptr;
-
-	if (!pReturn)
-	{
-		for (auto pClass = I::BaseClientDLL->GetAllClasses(); pClass; pClass = pClass->m_pNext)
-		{
-			if (pClass->m_ClassID == static_cast<int>(ETFClassID::CPrecipitation))
-			{
-				pReturn = pClass;
-				break;
-			}
-		}
-	}
-
-	return pReturn;
-}
-
-void CVisuals::CPrecipitation::Run()
-{
-	constexpr auto PRECIPITATION_INDEX = (MAX_EDICTS - 1);
-
-	const auto* pRainEntity = I::ClientEntityList->GetClientEntity(PRECIPITATION_INDEX);
-
-	if (!pRainEntity)
-	{
-		const auto pClass = GetPrecipitationClass();
-
-		if (!pClass || !pClass->m_pCreateFn)
-		{
-			return;
-		}
-
-		RainNetworkable = reinterpret_cast<IClientNetworkable * (__cdecl*)(int, int)>(pClass->m_pCreateFn)(PRECIPITATION_INDEX, 0);
-
-		if (!RainNetworkable)
-		{
-			return;
-		}
-
-		RainEntity = I::ClientEntityList->GetClientEntity(PRECIPITATION_INDEX);
-
-		if (!RainEntity)
-		{
-			return;
-		}
-
-		static auto dwOff = GetNetVar("CPrecipitation", "m_nPrecipType");
-
-		*reinterpret_cast<int*>(RainEntity + dwOff) = Vars::Visuals::Rain.Value - 1;
-
-		RainEntity->Networkable()->PreDataUpdate(DATA_UPDATE_CREATED);
-		RainEntity->Networkable()->OnPreDataChanged(DATA_UPDATE_CREATED);
-
-		RainEntity->m_vecMins() = Vec3(-32767.0f, -32767.0f, -32767.0f);
-		RainEntity->m_vecMaxs() = Vec3(32767.0f, 32767.0f, 32767.0f);
-
-		RainEntity->Networkable()->OnDataChanged(DATA_UPDATE_CREATED);
-		RainEntity->Networkable()->PostDataUpdate(DATA_UPDATE_CREATED);
-	}
-}
-
-void CVisuals::CPrecipitation::Cleanup()
-{
-	RainEntity = nullptr;
-	RainNetworkable = nullptr;
-}
-
-void CRunescapeChat::Draw()
-{
-	if (!Vars::Misc::RunescapeChat.Value)
-	{
-		return;
-	}
-	std::vector<size_t> vecRemovals;
-	const float curTime = I::GlobalVars->curtime;
-	Vec3 vHeadpos;
-	Vec3 vScreen;
-	for (size_t i = 0; i < m_vecChats.size(); i++)
-	{
-		auto& chat = m_vecChats.at(i);
-		if (chat.m_flTimeCreated + 4 < curTime)
-		{
-			vecRemovals.push_back(i);
-		}
-		else
-		{
-			if (chat.m_pEntity && chat.m_pEntity->IsAlive())
-			{
-				vHeadpos = chat.m_pEntity->GetHitboxPos(HITBOX_HEAD);
-				if (!vHeadpos.IsZero())
-				{
-					vHeadpos.z += 20;
-					if (Utils::W2S(vHeadpos, vScreen))
-					{
-						Color_t col = { 255, 255, 0, 255 };
-						switch (chat.m_Colour)
-						{
-							case eRS_RED:
-							{
-								col = { 255, 0, 0, 255 };
-								break;
-							}
-							case eRS_GREEN:
-							{
-								col = { 0, 255, 0, 255 };
-								break;
-							}
-							case eRS_CYAN:
-							{
-								col = { 0, 255, 255, 255 };
-								break;
-							}
-							case eRS_PURPLE:
-							{
-								col = { 255, 0, 255, 255 };
-								break;
-							}
-							case eRS_WHITE:
-							{
-								col = { 255,255,255,255 };
-								break;
-							}
-							default:break;
-						}
-						g_Draw.String(FONT_OSRS, vScreen.x, vScreen.y - (14 * chat.m_nOffset), col, ALIGN_CENTERHORIZONTAL, L"%ls", chat.m_szChatText.c_str());
-					}
-				}
-			}
-		}
-	}
-
-	for (auto& pos : vecRemovals)
-	{
-		m_vecChats.erase(m_vecChats.begin() + pos);
-	}
-}
-
-void CRunescapeChat::PushChat(CBaseEntity* pEntity, std::wstring szChatText)
-{
-	if (!Vars::Misc::RunescapeChat.Value)
-	{
-		return;
-	}
-	if (!pEntity) return;
-
-	EChatColour col = eRS_YELLOW;
-
-	if (!szChatText.rfind(L"red:", 0))
-	{
-		col = eRS_RED;
-		szChatText.erase(0, 4);
-	}
-	else if (!szChatText.rfind(L"green:", 0))
-	{
-		col = eRS_GREEN;
-		szChatText.erase(0, 6);
-	}
-	else if (!szChatText.rfind(L"cyan:", 0))
-	{
-		col = eRS_CYAN;
-		szChatText.erase(0, 5);
-	}
-	else if (!szChatText.rfind(L"purple:", 0))
-	{
-		col = eRS_PURPLE;
-		szChatText.erase(0, 7);
-	}
-	else if (!szChatText.rfind(L"white:", 0))
-	{
-		col = eRS_WHITE;
-		szChatText.erase(0, 6);
-	}
-
-
-
-
-	int highestOffset = 0;
-	for (auto& chat : m_vecChats)
-	{
-		if (chat.m_pEntity == pEntity)
-		{
-			if (chat.m_nOffset >= highestOffset)
-			{
-				highestOffset = chat.m_nOffset + 1;
-			}
-		}
-	}
-	Chat_t push = { pEntity, I::GlobalVars->curtime, highestOffset, col, szChatText };
-	m_vecChats.push_back(push);
 }

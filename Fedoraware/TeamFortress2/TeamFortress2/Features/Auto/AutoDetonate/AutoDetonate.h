@@ -4,10 +4,12 @@
 enum EDetTargets
 {
 	PLAYER = 1 << 0,
-	BUILDING = 1 << 1,
-	NPC = 1 << 2,
-	BOMB = 1 << 3,
-	STICKY = 1 << 4
+	SENTRY = 1 << 1,
+	DISPENSER = 1 << 2,
+	TELEPORTER = 1 << 3,
+	NPC = 1 << 4,
+	BOMB = 1 << 5,
+	STICKY = 1 << 6
 };
 
 class CAutoDetonate

@@ -79,7 +79,7 @@ bool CCritHack::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
 
 bool CCritHack::NoRandomCrits(CBaseCombatWeapon* pWeapon)
 {
-	float CritChance = Utils::ATTRIB_HOOK_FLOAT(1, "mult_crit_chance", pWeapon, 0, 1);
+	float CritChance = Utils::ATTRIB_HOOK_FLOAT(1, "mult_crit_chance", pWeapon);
 	if (CritChance == 0)
 	{
 		return true;
@@ -129,106 +129,6 @@ bool CCritHack::ShouldCrit()
 	if (critKey.Down()) { return true; }
 	if (G::CurWeaponType == EWeaponType::MELEE && Vars::CritHack::AlwaysMelee.Value) { return true; }
 
-	//Check if auto melee crit is enabled and player is using melee
-	if (Vars::CritHack::AutoMeleeCrit.Value && G::CurWeaponType == EWeaponType::MELEE)
-	{
-		//Base melee damage
-		int MeleeDamage = 65;
-
-		//Could be missing wepaons or reskins
-		switch (G::CurItemDefIndex)
-		{
-		case Scout_t_SunonaStick:
-		{
-			//The Sun on a Stick has a -25% melee damage stat
-			MeleeDamage = 26;
-			break;
-		}
-		case Scout_t_TheFanOWar:
-		{
-			//The Fan O'War has a -75% melee damage stat
-			MeleeDamage = 9;
-			break;
-		}
-		case Scout_t_TheWrapAssassin:
-		{
-			//The Wrap Assassin has a -65% melee damage stat
-			MeleeDamage = 12;
-			break;
-		}
-		case Soldier_t_TheDisciplinaryAction:
-		case Engi_t_TheJag:
-		{
-			//The Disciplinary Action and The Jag have a -25% melee damage stat
-			MeleeDamage = 49;
-			break;
-		}
-		case Soldier_t_TheEqualizer:
-		{
-			//The Equalizer does more damage the lower the local player's health is
-			break;
-		}
-		case Pyro_t_HotHand:
-		{
-			//The Hot Hand has a -20% melee damage stat
-			MeleeDamage = 28;
-			break;
-		}
-		case Pyro_t_SharpenedVolcanoFragment:
-		case Medic_t_Amputator:
-		{
-			//The Sharpened Volcano Fragment and The Amputator have a -20% melee damage stat
-			MeleeDamage = 52;
-			break;
-		}
-		case Pyro_t_TheBackScratcher:
-		{
-			//The Back Scratcher has a +25% melee damage stat
-			MeleeDamage = 81;
-			break;
-		}
-		case Demoman_t_TheScotsmansSkullcutter:
-		{
-			//The Scotsmans Skullcutter has a +20% melee damage stat
-			MeleeDamage = 78;
-			break;
-		}
-		case Heavy_t_WarriorsSpirit:
-		{
-			//The Warriors Spirit has a +30% melee damage stat
-			MeleeDamage = 85;
-			break;
-		}
-		case Sniper_t_TheTribalmansShiv:
-		{
-			//The Tribalmans Shiv has a -50% melee damage stat
-			MeleeDamage = 37;
-			break;
-		}
-		case Sniper_t_TheShahanshah:
-		{
-			//The Shahanshah has a -25% melee damage stat when above half health and a +25% when below half health
-			//81 if below half health
-			//49 if above half health
-			break;
-		}
-		default: break;
-		}
-
-		CBaseEntity* Player;
-		if ((Player = I::ClientEntityList->GetClientEntity(G::CurrentTargetIdx)))
-		{
-			if (G::CurItemDefIndex == Heavy_t_TheHolidayPunch)
-			{
-				if (Player->OnSolid())
-					return true;
-			}
-
-			if (MeleeDamage <= Player->GetHealth())
-				return true;
-		}
-	}
-
 	return false;
 }
 
@@ -261,7 +161,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
 	static int previousWeapon = 0;
 	static int previousCrit = 0;
-	static int startingNum = pCmd->command_number;
+	static int startingNum = I::ClientState->m_NetChannel->m_nOutSequenceNr = pCmd->command_number - 1;
 
 	const auto& pLocal = g_EntityCache.GetLocal();
 	if (!pLocal) { return; }
@@ -368,17 +268,20 @@ void CCritHack::Draw()
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 255, 255, 255, }, ALIGN_CENTERHORIZONTAL, tfm::format("%x", reinterpret_cast<float*>(pWeapon + 0xA54)).c_str());
 	}
+	// Are we currently forcing crits?
+	if (ShouldCrit() && NoRandomCrits(pWeapon) == false)
+	{
+		if (CritTicks.size() > 0)
+		{ 
+			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 0, 255, 0, 255 }, ALIGN_CENTERHORIZONTAL, "Forcing Crits");
+		}
+	}
 	//Can this weapon do random crits?
 	if (NoRandomCrits(pWeapon) == true)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 95, 95, 255 }, ALIGN_CENTERHORIZONTAL, L"No Random Crits");
 	}
-	// Are we currently forcing crits?
-	if (ShouldCrit() && NoRandomCrits(pWeapon) == false)
-	{
-		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 70, 190, 50, 255 }, ALIGN_CENTERHORIZONTAL, "Forcing crits...");
-	}
-	//crit banned check
+	//Crit banned check
 	if (CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255,0,0,255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
@@ -386,10 +289,10 @@ void CCritHack::Draw()
 	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
 	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
 	const std::wstring bucketstr = L"Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L"/" + std::to_wstring(static_cast<int>(bucketCap));
-	// crit bucket (this sucks)
-	if (NoRandomCrits(pWeapon) == false)	
+	// crit bucket string (this sucks)
+	if (NoRandomCrits(pWeapon) == false)
 	{
-			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 181, 181, 181, 255 }, ALIGN_CENTERHORIZONTAL, bucketstr.c_str()); 
+		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 181, 181, 181, 255 }, ALIGN_CENTERHORIZONTAL, bucketstr.c_str());
 	}
 	int w, h;
 	I::VGuiSurface->GetTextSize(g_Draw.m_vecFonts.at(FONT_INDICATORS).dwFont, bucketstr.c_str(), w, h);

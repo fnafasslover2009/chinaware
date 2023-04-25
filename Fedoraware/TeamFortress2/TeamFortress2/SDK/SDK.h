@@ -151,7 +151,6 @@ namespace Colors
 	inline Color_t OutlineESP =					{ 0, 0, 0, 255 };
 	inline Gradient_t DTBarIndicatorsCharged = { {106, 255, 131, 180}, {106, 255, 250, 180} };
 	inline Gradient_t DTBarIndicatorsCharging = { {255, 192, 81, 180}, {255, 134, 81, 180} };
-	inline Gradient_t ChokedBar =				{ { 47, 39, 0, 255 }, { 255, 210, 0, 255 } };
 	inline Gradient_t GradientHealthBar =				{ { 255, 0, 0, 255 }, { 0, 202, 124, 255 } };
 	inline Gradient_t GradientOverhealBar =		{ { 0, 202, 124, 255 }, { 167, 255, 237, 255 } };
 	inline Gradient_t UberchargeBar =			{ { 255, 255, 255, 255 }, { 255, 0, 228, 255 } };
@@ -194,8 +193,6 @@ namespace Colors
 	inline Color_t HitboxFace =					{ 255, 255, 255, 25 };
 	inline Color_t HitboxEdge =					{ 255, 255, 255, 175 };
 	inline Color_t WeaponIcon =					{ 255,255,255,255 };
-	inline Color_t NoscopeLines1 =				{ 0,0,0,255 };
-	inline Color_t NoscopeLines2 =				{ 0,0,0,100 };
 	inline Color_t bonecolor =					{ 231, 95, 255, 10 };
 	inline Color_t NPC =						{ 255, 255, 255, 255 };
 	inline Color_t Bomb =						{ 255, 255, 255, 255 };
@@ -468,7 +465,7 @@ namespace Utils
 		return wstr;
 	}
 
-	__inline float ATTRIB_HOOK_FLOAT(float baseValue, const char *searchString, CBaseEntity *ent, void *buffer, bool isGlobalConstString)
+	__inline float ATTRIB_HOOK_FLOAT(float baseValue, const char *searchString, CBaseEntity *ent, void *buffer = 0, bool isGlobalConstString = 1)
 	{
 		static auto fn = reinterpret_cast<float(__cdecl *)(float, const char *, CBaseEntity *, void *, bool)>(g_Pattern.Find(L"client.dll",
 			L"55 8B EC 83 EC 0C 8B 0D ? ? ? ? 53 56 57 33 F6 33 FF 89 75 F4 89 7D F8 8B 41 08 85 C0 74 38"));
@@ -600,7 +597,7 @@ namespace Utils
 			case TF_WEAPON_GRENADELAUNCHER:
 			case TF_WEAPON_FLAREGUN:
 			case TF_WEAPON_COMPOUND_BOW:
-			case TF_WEAPON_DIRECTHIT:
+			case TF_WEAPON_ROCKETLAUNCHER_DIRECTHIT:
 			case TF_WEAPON_CROSSBOW:
 			case TF_WEAPON_PARTICLE_CANNON:
 			case TF_WEAPON_DRG_POMSON:
@@ -760,7 +757,7 @@ namespace Utils
 		pCmd->upmove = result.z * scale;
 	}
 
-	__inline void StopMovement(CUserCmd* pCmd, bool safe = true) {
+/*	__inline void StopMovement(CUserCmd* pCmd, bool safe = true) {
 		if (safe && G::IsAttacking) { return; }
 
 		if (CBaseEntity* pLocal = g_EntityCache.GetLocal()) {
@@ -769,6 +766,28 @@ namespace Utils
 			pCmd->viewangles.y = direction;
 			pCmd->viewangles.z = 0;
 			pCmd->sidemove = 0; pCmd->forwardmove = 0;
+			G::ShouldStop = false;
+		}
+	}*/
+
+	__inline void StopMovement(CUserCmd* pCmd, bool safe = true) { //credits to fourteen
+		if (safe && G::IsAttacking) { return; }
+
+		if (CBaseEntity* pLocal = g_EntityCache.GetLocal()) {
+			QAngle direction;
+			Vector forward;
+
+			pCmd->viewangles.x = 90;
+			pCmd->viewangles.y = Math::VelocityToAngles(pLocal->m_vecVelocity()).y;
+
+			Math::VectorAngles(pLocal->GetVecVelocity(), direction);
+			direction.y = pCmd->viewangles.y - direction.y;
+			Math::AngleVectors(direction, &forward);
+
+			Vector negated_direction = forward * pLocal->GetVecVelocity().Length2D();
+			pCmd->forwardmove = negated_direction.x;
+			pCmd->sidemove = negated_direction.y;
+
 			G::ShouldStop = false;
 		}
 	}
@@ -876,7 +895,7 @@ namespace Utils
 			{
 			case TF_WEAPON_RAYGUN_REVENGE:
 			case TF_WEAPON_ROCKETLAUNCHER:
-			case TF_WEAPON_DIRECTHIT:
+			case TF_WEAPON_ROCKETLAUNCHER_DIRECTHIT:
 			{
 				Vec3 vecOffset(23.5f, 12.0f, -3.0f); //tf_weaponbase_gun.cpp @L529 & @L760
 				if (pLocal->IsDucking())
@@ -998,3 +1017,54 @@ namespace Particles {
 
 	}
 }
+
+class C_TFRagdoll
+{
+public:
+	NETVAR(m_vecRagdollOrigin, Vector, "CTFRagdoll", "m_vecRagdollOrigin");
+	NETVAR(m_iPlayerIndex, int, "CTFRagdoll", "m_iPlayerIndex");
+	NETVAR(m_vecForce, Vector, "CTFRagdoll", "m_vecForce");
+	NETVAR(m_vecRagdollVelocity, Vector, "CTFRagdoll", "m_vecRagdollVelocity");
+	NETVAR(m_nForceBone, int, "CTFRagdoll", "m_nForceBone");
+	NETVAR(m_bGib, bool, "CTFRagdoll", "m_bGib");
+	NETVAR(m_bBurning, bool, "CTFRagdoll", "m_bBurning");
+	NETVAR(m_bElectrocuted, bool, "CTFRagdoll", "m_bElectrocuted");
+	NETVAR(m_bFeignDeath, bool, "CTFRagdoll", "m_bFeignDeath");
+	NETVAR(m_bWasDisguised, bool, "CTFRagdoll", "m_bWasDisguised");
+	NETVAR(m_bOnGround, bool, "CTFRagdoll", "m_bOnGround");
+	NETVAR(m_bCloaked, bool, "CTFRagdoll", "m_bCloaked");
+	NETVAR(m_bBecomeAsh, bool, "CTFRagdoll", "m_bBecomeAsh");
+	NETVAR(m_iDamageCustom, int, "CTFRagdoll", "m_iDamageCustom");
+	NETVAR(m_iTeam, int, "CTFRagdoll", "m_iTeam");
+	NETVAR(m_iClass, int, "CTFRagdoll", "m_iClass");
+	NETVAR(m_bGoldRagdoll, bool, "CTFRagdoll", "m_bGoldRagdoll");
+	NETVAR(m_bIceRagdoll, bool, "CTFRagdoll", "m_bIceRagdoll");
+	NETVAR(m_bCritOnHardHit, bool, "CTFRagdoll", "m_bCritOnHardHit");
+	NETVAR(m_flHeadScale, float, "CTFRagdoll", "m_flHeadScale");
+	NETVAR(m_flTorsoScale, float, "CTFRagdoll", "m_flTorsoScale");
+	NETVAR(m_flHandScale, float, "CTFRagdoll", "m_flHandScale");
+
+	__forceinline bool RagdollIsInValidTeam()
+	{
+		const int team = this->m_iTeam();
+		return (team == TEAM_RED || team == TEAM_BLU);
+	}
+
+	bool& m_bDissolving()
+	{						
+		static int nOffset = GetNetVar("CTFRagdoll", "m_bFeignDeath") - 1;
+		return *reinterpret_cast<bool*>(reinterpret_cast<DWORD>(this) + nOffset);
+	}
+
+	inline void DisableAllEffects()
+	{
+		m_bGib() = false;
+		m_bBurning() = false;
+		m_bElectrocuted() = false;
+		m_bFeignDeath() = false;
+		m_bBecomeAsh() = false;
+		m_bGoldRagdoll() = false;
+		m_bIceRagdoll() = false;
+		m_bDissolving() = false;
+	}
+};

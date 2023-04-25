@@ -36,7 +36,7 @@ std::optional<float> PResolver::GetPitchForSniperDot(CBaseEntity* pEntity){
 }
 
 std::optional<float> PResolver::PredictBaseYaw(CBaseEntity* pEntity){
-	if (I::GlobalVars->tickcount - mResolverData[pEntity].pLastFireAngles.first.first > 66 || !mResolverData[pEntity].pLastFireAngles.first.first) { //staleness & validity check
+if (I::GlobalVars->tickcount - mResolverData[pEntity].pLastFireAngles.first.first > 66 || !mResolverData[pEntity].pLastFireAngles.first.first) { //staleness & validity check
 		CBaseEntity* pLocal = g_EntityCache.GetLocal();
 		if (!pLocal) { return std::nullopt; }
 		if (!pLocal->IsAlive() || pLocal->IsAGhost()) { return std::nullopt; }
@@ -254,7 +254,7 @@ void PResolver::FXFireBullet(int iIndex, const Vec3 vAngles){
 		Utils::ConLog("Resolver", tfm::format("adjusted 2 %.1f %.1f", vAngStore.x, vAngStore.y).c_str(), {0, 222, 255, 255});
 	}
 
-	mResolverData[pEntity].pLastFireAngles = { { I::GlobalVars->tickcount, true }, vAngStore};
+	mResolverData[pEntity].pLastFireAngles = { { I::GlobalVars->tickcount, true }, vAngStore};	
 	SetAngles(vAngAdjusted, pEntity);
 }
 
