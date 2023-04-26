@@ -160,55 +160,35 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
 	static int previousWeapon = 0;
-	static int previousCrit = 0;
-	static int startingNum = I::ClientState->m_NetChannel->m_nOutSequenceNr = pCmd->command_number - 1;
-
+	static int startingNum = pCmd->command_number - 1;
 	const auto& pLocal = g_EntityCache.GetLocal();
-	if (!pLocal) { return; }
-
-	const auto& pWeapon = pLocal->GetActiveWeapon();
-	if (!pWeapon) { return; }
-
-	if (G::IsAttacking || IsAttacking(pCmd, pWeapon)/* || pCmd->buttons & IN_ATTACK*/)
-	{
+	if (!pLocal || G::IsAttacking) {
 		return;
 	}
-
+	const auto& pWeapon = pLocal->GetActiveWeapon();
+	if (!pWeapon || IsAttacking(pCmd, pWeapon)) {
+		return;
+	}
 	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
-	if (bRescanRequired)
-	{
+	if (bRescanRequired) {
 		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
 		CritTicks.clear();
 	}
-
-	if (CritTicks.size() >= 256)
-	{
+	if (CritTicks.size() >= 256) {
 		return;
 	}
-
-	//CritBucketBP = *reinterpret_cast<float*>(pWeapon + 0xA54);
-	ProtectData = true; //	stop shit that interferes with our crit bucket because it will BREAK it
-	const int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
-	for (int i = 0; i < loops; i++)
-	{
+	int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
+	for (int i = 0; i < loops; i++) {
 		const int cmdNum = startingNum + i;
 		*I::RandomSeed = MD5_PseudoRandom(cmdNum) & MASK_SIGNED;
-		if (pWeapon->WillCrit())
-		{
-			CritTicks.push_back(cmdNum); //	store our wish command number for later reference
+		if (pWeapon->WillCrit()) {
+			CritTicks.push_back(cmdNum);
 		}
 	}
 	startingNum += loops;
-	ProtectData = false; //	we no longer need to be protecting important crit data
-
-	//*reinterpret_cast<float*>(pWeapon + 0xA54) = CritBucketBP;
-	*reinterpret_cast<int*>(pWeapon + 0xA5C) = 0; //	dont comment this out, makes sure our crit mult stays as low as possible
-	//	crit mult can reach a maximum value of 3!! which means we expend 3 crits WORTH from our bucket
-	//	by forcing crit mult to be its minimum value of 1, we can crit more without directly fucking our bucket
-	//	yes ProtectData stops this value from changing artificially, but it still changes when you fire and this is worth it imo.
-
 	*I::RandomSeed = seedBackup;
+	*reinterpret_cast<int*>(pWeapon + 0xA5C) = 1;
 }
 
 void CCritHack::Run(CUserCmd* pCmd)

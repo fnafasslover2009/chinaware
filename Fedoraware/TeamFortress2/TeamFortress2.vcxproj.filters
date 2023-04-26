@@ -163,7 +163,6 @@
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_InvalidateBoneCache.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_SetupBones.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_InvalidateBoneCaches.cpp" />
-    <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_PushAllowBoneAccess.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeamFortress2\Features\AutoQueue\AutoQueue.h" />
