@@ -1671,6 +1671,9 @@ void CMenu::MenuMisc()
 				I::EngineClient->ClientCmd_Unrestricted("itemtest");
 			if (Button("Fix Chams", ImVec2(btnWidth, 20)))
 			{
+				F::DMEChams.DeleteMaterials();
+				F::Glow.DeleteMaterials();
+
 				F::DMEChams.CreateMaterials();
 				F::Glow.CreateMaterials();
 			}

@@ -29,12 +29,12 @@ private:
 private:
 	void DrawModel(CBaseEntity* pEntity, int nFlags, bool bIsDrawingModels);
 	void SetScale(int nScale, bool bReset);
-	void DeleteMaterials();
-
+	
 public:
 	void Init();
 	void Render();
 	void CreateMaterials();
+	void DeleteMaterials();
 
 	bool HasDrawn(CBaseEntity* pEntity)
 	{
