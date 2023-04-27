@@ -137,11 +137,11 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 	int retVal = -1;
 	bool popBack = false;
 
-	for (auto it = CritTicks.rbegin(); it != CritTicks.rend(); ++it)
+	for (auto nigga = CritTicks.rbegin(); nigga != CritTicks.rend(); ++nigga)
 	{
-		if (*it >= pCmd->command_number)
+		if (*nigga >= pCmd->command_number)
 		{
-			retVal = *it;
+			retVal = *nigga;
 		}
 		else
 		{
@@ -161,6 +161,17 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 		if (newOutSeqNr > lastOutSeqNr)
 		{
 			netchan->m_nOutSequenceNr = newOutSeqNr;
+		}
+	}
+
+	if (auto pLocal = g_EntityCache.GetLocal())
+	{
+		if (auto pWeapon = pLocal->GetActiveWeapon())
+		{
+			if (pWeapon->WillCrit())
+			{
+				CritTicks.push_back(pCmd->command_number);
+			}
 		}
 	}
 
@@ -208,28 +219,34 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const auto& pWeapon = g_EntityCache.GetWeapon();
 	if (!pWeapon || !pWeapon->CanFireCriticalShot(false)) { return; }
 
-	ScanForCrits(pCmd, 50); //	fill our vector slowly.
+	ScanForCrits(pCmd, 50); // fill our vector slowly.
 
-	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
-	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
+	const int closestGoodTick = LastGoodCritTick(pCmd); // retrieve our wish
+	if (IsAttacking(pCmd, pWeapon)) // is it valid & should we even use it
 	{
-		if (ShouldCrit())
+		if (ShouldCrit() && closestGoodTick >= 0) // only crit if we have a good tick
 		{
-			if (closestGoodTick < 0) { return; }
-			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
-			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED; //	trash poopy whatever who cares
+			pCmd->command_number = closestGoodTick;
+			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;
 		}
-		else if (Vars::CritHack::AvoidRandom.Value) //	we don't want to crit
+		else if (Vars::CritHack::AvoidRandom.Value) // avoid random crits if enabled
 		{
-			for (int tries = 1; tries < 25; tries++)
+			// We will only increment the command number if it doesn't land on a tick
+			// where we previously found a random crit.
+			const int maxTries = 25;
+			int tries = 0;
+			while (tries < maxTries)
 			{
-				if (std::find(CritTicks.begin(), CritTicks.end(), pCmd->command_number + tries) != CritTicks.end())
+				tries++;
+				const int newCmdNum = pCmd->command_number + tries;
+				if (std::find(CritTicks.begin(), CritTicks.end(), newCmdNum) != CritTicks.end())
 				{
-					continue; //	what a useless attempt
+					continue;
 				}
-				pCmd->command_number += tries;
-				pCmd->random_seed = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
-				break; //	we found a seed that we can use to avoid a crit and have skipped to it, woohoo
+				pCmd->command_number = newCmdNum;
+				pCmd->random_seed = MD5_PseudoRandom(newCmdNum) & MASK_SIGNED;
+				CritTicks.push_back(newCmdNum);
+				break;
 			}
 		}
 	}
