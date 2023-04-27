@@ -134,49 +134,50 @@ bool CCritHack::ShouldCrit()
 
 int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 {
-	int retVal = -1;
-	bool popBack = false;
+	int lastCritTick = -1;
+	bool shouldPopBack = false;
 
 	for (auto nigga = CritTicks.rbegin(); nigga != CritTicks.rend(); ++nigga)
 	{
 		if (*nigga >= pCmd->command_number)
 		{
-			retVal = *nigga;
+			lastCritTick = *nigga;
 		}
 		else
 		{
-			popBack = true;
+			shouldPopBack = true;
 		}
 	}
 
-	if (popBack)
+	if (shouldPopBack)
 	{
-		CritTicks.pop_back();
+		CritTicks.erase(CritTicks.begin(), std::find(CritTicks.begin(), CritTicks.end(), lastCritTick));
 	}
 
-	if (auto netchan = I::EngineClient->GetNetChannelInfo())
+	if (auto netChan = I::EngineClient->GetNetChannelInfo())
 	{
-		const int lastOutSeqNr = netchan->m_nOutSequenceNr;
+		const int lastOutSeqNr = netChan->m_nOutSequenceNr;
 		const int newOutSeqNr = pCmd->command_number - 1;
 		if (newOutSeqNr > lastOutSeqNr)
 		{
-			netchan->m_nOutSequenceNr = newOutSeqNr;
+			netChan->m_nOutSequenceNr = newOutSeqNr;
 		}
 	}
 
-	if (auto pLocal = g_EntityCache.GetLocal())
+	if (auto localPlayer = g_EntityCache.GetLocal())
 	{
-		if (auto pWeapon = pLocal->GetActiveWeapon())
+		if (auto activeWeapon = localPlayer->GetActiveWeapon())
 		{
-			if (pWeapon->WillCrit())
+			if (activeWeapon->WillCrit())
 			{
 				CritTicks.push_back(pCmd->command_number);
 			}
 		}
 	}
 
-	return retVal;
+	return lastCritTick;
 }
+
 
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
@@ -210,7 +211,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	startingNum += loops;
 	*I::RandomSeed = seedBackup;
 	*reinterpret_cast<int*>(pWeapon + 0xA5C) = 1;
-}
+}  //i broke the crithack
 
 void CCritHack::Run(CUserCmd* pCmd)
 {
