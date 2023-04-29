@@ -209,7 +209,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 		return;
 	}
 
-	if (I::ClientState && I::ClientState->m_NetChannel) //https://www.unknowncheats.me/forum/team-fortress-2-a/323611-crithack-method
+	if (I::ClientState && I::ClientState->m_NetChannel) //https://www.unknowncheats.me/forum/team-fortress-2-a/323611-crithack-method.html
 	{
 		int currentOutSequenceNr = I::ClientState->m_NetChannel->m_nOutSequenceNr;
 		if (currentOutSequenceNr != previousOutSequenceNr)
