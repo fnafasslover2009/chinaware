@@ -937,8 +937,11 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 		case 1:
 		{
 			// Silent
-			Utils::FixMovement(pCmd, vAngle);
-			pCmd->viewangles = vAngle;
+			if (G::IsAttacking)
+				G::SilentTime = true;
+			    Utils::FixMovement(pCmd, vAngle);
+			    pCmd->viewangles = vAngle;
+
 			break;
 		}
 

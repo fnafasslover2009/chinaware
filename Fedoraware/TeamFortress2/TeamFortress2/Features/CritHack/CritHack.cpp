@@ -182,36 +182,56 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
 	static int previousWeapon = 0;
+	static int previousCrit = 0;
 	static int startingNum = pCmd->command_number - 1;
+	static int previousOutSequenceNr = -1;
+
 	const auto& pLocal = g_EntityCache.GetLocal();
-	if (!pLocal || G::IsAttacking) {
-		return;
-	}
+	if (!pLocal) { return; }
+
 	const auto& pWeapon = pLocal->GetActiveWeapon();
-	if (!pWeapon || IsAttacking(pCmd, pWeapon)) {
+	if (!pWeapon) { return; }
+
+	if (G::IsAttacking || IsAttacking(pCmd, pWeapon))
+	{
 		return;
 	}
-	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
-	if (bRescanRequired) {
+
+	if (previousWeapon != pWeapon->GetIndex())
+	{
 		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
 		CritTicks.clear();
 	}
-	if (CritTicks.size() >= 256) {
+
+	if (CritTicks.size() >= 256)
+	{
 		return;
 	}
-	int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
-	for (int i = 0; i < loops; i++) {
+
+	if (I::ClientState && I::ClientState->m_NetChannel) //https://www.unknowncheats.me/forum/team-fortress-2-a/323611-crithack-method
+	{
+		int currentOutSequenceNr = I::ClientState->m_NetChannel->m_nOutSequenceNr;
+		if (currentOutSequenceNr != previousOutSequenceNr)
+		{
+			startingNum = currentOutSequenceNr + 1;
+			previousOutSequenceNr = currentOutSequenceNr;
+		}
+	}
+
+	const int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
+	for (int i = 0; i < loops; i++)
+	{
 		const int cmdNum = startingNum + i;
 		*I::RandomSeed = MD5_PseudoRandom(cmdNum) & MASK_SIGNED;
-		if (pWeapon->WillCrit()) {
+		if (pWeapon->WillCrit())
+		{
 			CritTicks.push_back(cmdNum);
 		}
 	}
-	startingNum += loops;
+
 	*I::RandomSeed = seedBackup;
-	*reinterpret_cast<int*>(pWeapon + 0xA5C) = 1;
-}  //i broke the crithack
+}                                                          //i broke the crithack :))))
 
 void CCritHack::Run(CUserCmd* pCmd)
 {
