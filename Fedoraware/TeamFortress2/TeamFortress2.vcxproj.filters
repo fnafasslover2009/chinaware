@@ -160,9 +160,6 @@
     <ClCompile Include="TeamFortress2\Hooks\Detours\VGui_MenuBuilder_AddMenuItem.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_PlayerResource_GetTeamColor.cpp" />
     <ClCompile Include="TeamFortress2\Features\ESP\GetWeaponName\GetWeaponName.cpp" />
-    <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_InvalidateBoneCache.cpp" />
-    <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_SetupBones.cpp" />
-    <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_InvalidateBoneCaches.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeamFortress2\Features\AutoQueue\AutoQueue.h" />
