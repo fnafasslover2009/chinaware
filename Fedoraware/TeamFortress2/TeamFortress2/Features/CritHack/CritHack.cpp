@@ -134,57 +134,41 @@ bool CCritHack::ShouldCrit()
 
 int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 {
-	int lastCritTick = -1;
-	bool shouldPopBack = false;
+	int retVal = -1;
+	bool popBack = false;
 
-	for (auto nigga = CritTicks.rbegin(); nigga != CritTicks.rend(); ++nigga)
+	for (const auto& tick : CritTicks)
 	{
-		if (*nigga >= pCmd->command_number)
+		if (tick >= pCmd->command_number)
 		{
-			lastCritTick = *nigga;
+			retVal = tick;
 		}
 		else
 		{
-			shouldPopBack = true;
+			popBack = true;
 		}
 	}
 
-	if (shouldPopBack)
+	if (popBack)
 	{
-		CritTicks.erase(CritTicks.begin(), std::find(CritTicks.begin(), CritTicks.end(), lastCritTick));
+		CritTicks.pop_back();
 	}
 
-	if (auto netChan = I::EngineClient->GetNetChannelInfo())
+	if (const auto netchan = I::EngineClient->GetNetChannelInfo())
 	{
-		const int lastOutSeqNr = netChan->m_nOutSequenceNr;
-		const int newOutSeqNr = pCmd->command_number - 1;
-		if (newOutSeqNr > lastOutSeqNr)
+		if (netchan->m_nOutSequenceNr < pCmd->command_number)
 		{
-			netChan->m_nOutSequenceNr = newOutSeqNr;
+			netchan->m_nOutSequenceNr = pCmd->command_number - 1;
 		}
 	}
 
-	if (auto localPlayer = g_EntityCache.GetLocal())
-	{
-		if (auto activeWeapon = localPlayer->GetActiveWeapon())
-		{
-			if (activeWeapon->WillCrit())
-			{
-				CritTicks.push_back(pCmd->command_number);
-			}
-		}
-	}
-
-	return lastCritTick;
+	return retVal;
 }
-
 
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
 	static int previousWeapon = 0;
 	static int previousCrit = 0;
-	static int startingNum = pCmd->command_number - 1;
-	static int previousOutSequenceNr = -1;
 
 	const auto& pLocal = g_EntityCache.GetLocal();
 	if (!pLocal) { return; }
@@ -192,14 +176,14 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	const auto& pWeapon = pLocal->GetActiveWeapon();
 	if (!pWeapon) { return; }
 
-	if (G::IsAttacking || IsAttacking(pCmd, pWeapon))
+	if (G::IsAttacking || IsAttacking(pCmd, pWeapon)/* || pCmd->buttons & IN_ATTACK*/)
 	{
 		return;
 	}
 
-	if (previousWeapon != pWeapon->GetIndex())
+	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
+	if (bRescanRequired)
 	{
-		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
 		CritTicks.clear();
 	}
@@ -209,29 +193,25 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 		return;
 	}
 
-	if (I::ClientState && I::ClientState->m_NetChannel) //https://www.unknowncheats.me/forum/team-fortress-2-a/323611-crithack-method.html
-	{
-		int currentOutSequenceNr = I::ClientState->m_NetChannel->m_nOutSequenceNr;
-		if (currentOutSequenceNr != previousOutSequenceNr)
-		{
-			startingNum = currentOutSequenceNr + 1;
-			previousOutSequenceNr = currentOutSequenceNr;
-		}
-	}
-
-	const int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
+	//CritBucketBP = *reinterpret_cast<float*>(pWeapon + 0xA54);
+	ProtectData = true; //	stop shit that interferes with our crit bucket because it will BREAK it
 	for (int i = 0; i < loops; i++)
 	{
-		const int cmdNum = startingNum + i;
+		const int cmdNum = I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr + i;
 		*I::RandomSeed = MD5_PseudoRandom(cmdNum) & MASK_SIGNED;
 		if (pWeapon->WillCrit())
 		{
-			CritTicks.push_back(cmdNum);
+			CritTicks.push_back(cmdNum); //	store our wish command number for later reference
 		}
 	}
+	ProtectData = false; //	we no longer need to be protecting important crit data
 
-	*I::RandomSeed = seedBackup;
-}                                                          //i broke the crithack :))))
+	//*reinterpret_cast<float*>(pWeapon + 0xA54) = CritBucketBP;
+	*reinterpret_cast<int*>(pWeapon + 0xA5C) = 0; //	dont comment this out, makes sure our crit mult stays as low as possible
+	//	crit mult can reach a maximum value of 3!! which means we expend 3 crits WORTH from our bucket
+	//	by forcing crit mult to be its minimum value of 1, we can crit more without directly fucking our bucket
+	//	yes ProtectData stops this value from changing artificially, but it still changes when you fire and this is worth it imo.
+}
 
 void CCritHack::Run(CUserCmd* pCmd)
 {
@@ -240,38 +220,34 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const auto& pWeapon = g_EntityCache.GetWeapon();
 	if (!pWeapon || !pWeapon->CanFireCriticalShot(false)) { return; }
 
-	ScanForCrits(pCmd, 50); // fill our vector slowly.
+	ScanForCrits(pCmd, 50); //	fill our vector slowly.
 
-	const int closestGoodTick = LastGoodCritTick(pCmd); // retrieve our wish
-	if (IsAttacking(pCmd, pWeapon)) // is it valid & should we even use it
+	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
+	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
 	{
-		if (ShouldCrit() && closestGoodTick >= 0) // only crit if we have a good tick
+		if (ShouldCrit())
 		{
-			pCmd->command_number = closestGoodTick;
-			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;
+			if (closestGoodTick < 0) { return; }
+			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
+			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED; //	trash poopy whatever who cares
+			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1; // force crits
 		}
-		else if (Vars::CritHack::AvoidRandom.Value) // avoid random crits if enabled
+		else if (Vars::CritHack::AvoidRandom.Value) //	we don't want to crit
 		{
-			// We will only increment the command number if it doesn't land on a tick
-			// where we previously found a random crit.
-			const int maxTries = 25;
-			int tries = 0;
-			while (tries < maxTries)
+			for (int tries = 1; tries < 25; tries++)
 			{
-				tries++;
-				const int newCmdNum = pCmd->command_number + tries;
-				if (std::find(CritTicks.begin(), CritTicks.end(), newCmdNum) != CritTicks.end())
+				if (std::find(CritTicks.begin(), CritTicks.end(), pCmd->command_number + tries) != CritTicks.end())
 				{
-					continue;
+					continue; //	what a useless attempt
 				}
-				pCmd->command_number = newCmdNum;
-				pCmd->random_seed = MD5_PseudoRandom(newCmdNum) & MASK_SIGNED;
-				CritTicks.push_back(newCmdNum);
-				break;
+				pCmd->command_number += tries;
+				pCmd->random_seed = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
+				break; //	we found a seed that we can use to avoid a crit and have skipped to it, woohoo
 			}
 		}
 	}
 }
+
 
 void CCritHack::Draw()
 {
