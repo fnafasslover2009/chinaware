@@ -137,11 +137,22 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 	int retVal = -1;
 	bool popBack = false;
 
-	for (const auto& tick : CritTicks)
+	const int iCritCommandNumber = pCmd->command_number;
+
+	auto pNetChannel = I::EngineClient->GetNetChannelInfo();
+	if (!pNetChannel)
+		return -1;
+
+	const int iOutSequenceNr = pNetChannel->m_nOutSequenceNr;
+	const int iStartCommandNumber = iOutSequenceNr - pNetChannel->m_nChokedPackets;
+
+	for (int i = CritTicks.size() - 1; i >= 0; --i)
 	{
-		if (tick >= pCmd->command_number)
+		const int iTick = CritTicks[i];
+		const int iAdjustedCommandNumber = iStartCommandNumber + iTick;
+		if (iAdjustedCommandNumber >= iCritCommandNumber)
 		{
-			retVal = tick;
+			retVal = iTick;
 		}
 		else
 		{
@@ -154,14 +165,6 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 		CritTicks.pop_back();
 	}
 
-	if (const auto netchan = I::EngineClient->GetNetChannelInfo())
-	{
-		if (netchan->m_nOutSequenceNr < pCmd->command_number)
-		{
-			netchan->m_nOutSequenceNr = pCmd->command_number - 1;
-		}
-	}
-
 	return retVal;
 }
 
@@ -169,6 +172,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
 	static int previousWeapon = 0;
 	static int previousCrit = 0;
+	static int startingNum = pCmd->command_number;
 
 	const auto& pLocal = g_EntityCache.GetLocal();
 	if (!pLocal) { return; }
@@ -184,6 +188,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
 	if (bRescanRequired)
 	{
+		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
 		CritTicks.clear();
 	}
@@ -195,15 +200,17 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 
 	//CritBucketBP = *reinterpret_cast<float*>(pWeapon + 0xA54);
 	ProtectData = true; //	stop shit that interferes with our crit bucket because it will BREAK it
+	const int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
 	for (int i = 0; i < loops; i++)
 	{
-		const int cmdNum = I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr + i;
+		const int cmdNum = startingNum + i;
 		*I::RandomSeed = MD5_PseudoRandom(cmdNum) & MASK_SIGNED;
 		if (pWeapon->WillCrit())
 		{
 			CritTicks.push_back(cmdNum); //	store our wish command number for later reference
 		}
 	}
+	startingNum += loops;
 	ProtectData = false; //	we no longer need to be protecting important crit data
 
 	//*reinterpret_cast<float*>(pWeapon + 0xA54) = CritBucketBP;
@@ -211,6 +218,8 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	//	crit mult can reach a maximum value of 3!! which means we expend 3 crits WORTH from our bucket
 	//	by forcing crit mult to be its minimum value of 1, we can crit more without directly fucking our bucket
 	//	yes ProtectData stops this value from changing artificially, but it still changes when you fire and this is worth it imo.
+
+	*I::RandomSeed = seedBackup;
 }
 
 void CCritHack::Run(CUserCmd* pCmd)
