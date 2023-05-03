@@ -240,6 +240,18 @@ void CCritHack::Run(CUserCmd* pCmd)
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED; //	trash poopy whatever who cares
 			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1; // force crits
+
+			if (pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER)
+			{
+				auto old_ammo_count = pWeapon->GetAmmo();
+				static auto new_ammo_count = old_ammo_count;
+
+				const auto has_fired_bullet = new_ammo_count != old_ammo_count;
+				if (!has_fired_bullet)
+				{
+					return;
+				}
+			}
 		}
 		else if (Vars::CritHack::AvoidRandom.Value) //	we don't want to crit
 		{
@@ -256,7 +268,6 @@ void CCritHack::Run(CUserCmd* pCmd)
 		}
 	}
 }
-
 
 void CCritHack::Draw()
 {
