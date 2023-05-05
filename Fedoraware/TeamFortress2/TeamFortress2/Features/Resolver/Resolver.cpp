@@ -1,7 +1,7 @@
 #include "Resolver.h"
 #include "../AntiHack/AntiAim.h"
 
-static std::vector<float> vYawRotations{ 0.0f, 180.0f, 90.0f, -90.0f};
+static std::vector<float> vYawRotations{ 0.0f, 30.0f, 60.0f, 90.0f, 180.0f, -180.0f, -90.0f, -60.0f, -30.0f};
 
 void PResolver::UpdateSniperDots(){
 	mSniperDots.clear();
