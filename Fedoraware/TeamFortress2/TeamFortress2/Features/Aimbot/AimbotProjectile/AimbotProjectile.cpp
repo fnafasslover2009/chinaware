@@ -441,8 +441,7 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 	int iCurPoint = 0, iTestPoints = 0; //maybe better way to do this
 	for (const auto& vPoint : vPoints)
 	{
-		if (iTestPoints > 15) { break; }
-		if (static_cast<int>(vVisPoints.size()) >= 7) { break; }
+		if (iTestPoints > 15 || static_cast<int>(vVisPoints.size()) >= 3) { break; }
 		if (!IsPointAllowed(iCurPoint))
 		{
 			iCurPoint++;
