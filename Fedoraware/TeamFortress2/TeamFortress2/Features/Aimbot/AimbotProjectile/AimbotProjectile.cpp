@@ -130,24 +130,38 @@ bool CAimbotProjectile::CalcProjAngle(const Vec3& vLocalPos, const Vec3& vTarget
 	const float fDist = vDelta.z;
 	const float fVel = projInfo.m_flVelocity;
 
-	if (!fGravity)
+	if (fGravity == 0.0f)
 	{
 		const Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vTargetPos);
 		out.m_flPitch = -DEG2RAD(vAngleTo.x);
 		out.m_flYaw = DEG2RAD(vAngleTo.y);
 	}
-	else
-	{	//	arch
+	else 
+	{
 		const float fRoot = pow(fVel, 4) - fGravity * (fGravity * pow(fHyp, 2) + 2.f * fDist * pow(fVel, 2));
-		if (fRoot < 0.f)
+		if (fRoot < 0.f) 
 		{
 			return false;
 		}
-		out.m_flPitch = atan((pow(fVel, 2) - sqrt(fRoot)) / (fGravity * fHyp));
+
+		const float fAngle1 = atan((pow(fVel, 2) - sqrt(fRoot)) / (fGravity * fHyp)); 
+		const float fAngle2 = atan((pow(fVel, 2) + sqrt(fRoot)) / (fGravity * fHyp)); 
+
+		out.m_flPitch = fAngle1;
+		if (fAngle2 > 0.0f)
+		{
+			float fTime1 = fHyp / (cos(fAngle1) * fVel);
+			float fTime2 = fHyp / (cos(fAngle2) * fVel);
+			if (fTime2 < fTime1)
+			{
+				out.m_flPitch = fAngle2;
+			}
+		}
+
 		out.m_flYaw = atan2(vDelta.y, vDelta.x);
 	}
-	out.m_flTime = fHyp / (cos(out.m_flPitch) * fVel);
 
+	out.m_flTime = fHyp / (cos(out.m_flPitch) * fVel);
 	return true;
 }
 
@@ -404,29 +418,27 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 
 	const float flBBoxScale = Vars::Aimbot::Projectile::ScanScale.Value; // stop shoot flor (:D)
 
-	// this way overshoots players that are crouching and I don't know why.
 	const Vec3 vMaxs = I::GameMovement->GetPlayerMaxs(bIsDucking) * flBBoxScale;
-	const auto vMins = Vec3(-vMaxs.x, -vMaxs.y, vMaxs.z - vMaxs.z * flBBoxScale);
+	const Vec3 vMins = Vec3(-vMaxs.x, -vMaxs.y, bIsDucking ? -vMaxs.z * flBBoxScale : -vMaxs.z);
 
 	const Vec3 vHeadDelta = Utils::GetHeadOffset(pEntity);
 
-	const std::vector vPoints = {
-		// oh you don't like 15 points because it fucks your fps??? TOO BAD!//
-		Vec3(vHeadDelta.x, vHeadDelta.y, vMaxs.z), //	head bone probably
-		Vec3(0, 0, (vMins.z + vMaxs.z) / 2), //	middles (scan first bc they are more accurate)
-		Vec3(0, 0, vMins.z), //	-
-		Vec3(vMins.x, vMins.y, vMaxs.z), //	top four corners
-		Vec3(vMins.x, vMaxs.y, vMaxs.z), //	-
-		Vec3(vMaxs.x, vMaxs.y, vMaxs.z), //	-
-		Vec3(vMaxs.x, vMins.y, vMaxs.z), //	-
-		Vec3(vMins.x, vMins.y, (vMins.z + vMaxs.z) / 2), //	middle four corners
-		Vec3(vMins.x, vMaxs.y, (vMins.z + vMaxs.z) / 2), //	-
-		Vec3(vMaxs.x, vMaxs.y, (vMins.z + vMaxs.z) / 2), //	-
-		Vec3(vMaxs.x, vMins.y, (vMins.z + vMaxs.z) / 2), //	-
-		Vec3(vMins.x, vMins.y, vMins.z), //	bottom four corners
-		Vec3(vMins.x, vMaxs.y, vMins.z), //	-
-		Vec3(vMaxs.x, vMaxs.y, vMins.z), //	-
-		Vec3(vMaxs.x, vMins.y, vMins.z) //	-
+	const std::vector<Vec3> vPoints = {
+	Vec3(vHeadDelta.x, vHeadDelta.y, vMaxs.z), // Head bone (most likely)
+	Vec3(0, 0, (vMins.z + vMaxs.z) / 2), // Middle point (more accurate)
+	Vec3(0, 0, vMins.z), // Bottom middle point
+	Vec3(vMins.x, vMins.y, vMaxs.z), // Top-left corner
+	Vec3(vMins.x, vMaxs.y, vMaxs.z), // Top-right corner
+	Vec3(vMaxs.x, vMaxs.y, vMaxs.z), // Top-front corner
+	Vec3(vMaxs.x, vMins.y, vMaxs.z), // Top-back corner
+	Vec3(vMins.x, vMins.y, (vMins.z + vMaxs.z) / 2), // Middle-left point
+	Vec3(vMins.x, vMaxs.y, (vMins.z + vMaxs.z) / 2), // Middle-right point
+	Vec3(vMaxs.x, vMaxs.y, (vMins.z + vMaxs.z) / 2), // Middle-front point
+	Vec3(vMaxs.x, vMins.y, (vMins.z + vMaxs.z) / 2), // Middle-back point
+	Vec3(vMins.x, vMins.y, vMins.z), // Bottom-left corner
+	Vec3(vMins.x, vMaxs.y, vMins.z), // Bottom-right corner
+	Vec3(vMaxs.x, vMaxs.y, vMins.z), // Bottom-front corner
+	Vec3(vMaxs.x, vMins.y, vMins.z) // Bottom-back corner
 	};
 
 	std::vector<Vec3> vVisPoints{};
@@ -922,6 +934,7 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 {
 	vAngle -= G::PunchAngles;
 	Math::ClampAngles(vAngle);
+	bool* pSendPacket;
 
 	switch (Vars::Aimbot::Projectile::AimMethod.Value)
 	{
@@ -938,6 +951,7 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 			// Silent
 			if (G::IsAttacking)
 				G::SilentTime = true;
+			    *pSendPacket = false;
 			    Utils::FixMovement(pCmd, vAngle);
 			    pCmd->viewangles = vAngle;
 

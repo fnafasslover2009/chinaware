@@ -137,22 +137,11 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 	int retVal = -1;
 	bool popBack = false;
 
-	const int iCritCommandNumber = pCmd->command_number;
-
-	auto pNetChannel = I::EngineClient->GetNetChannelInfo();
-	if (!pNetChannel)
-		return -1;
-
-	const int iOutSequenceNr = pNetChannel->m_nOutSequenceNr;
-	const int iStartCommandNumber = iOutSequenceNr - pNetChannel->m_nChokedPackets;
-
-	for (int i = CritTicks.size() - 1; i >= 0; --i)
+	for (auto it = CritTicks.rbegin(); it != CritTicks.rend(); ++it)
 	{
-		const int iTick = CritTicks[i];
-		const int iAdjustedCommandNumber = iStartCommandNumber + iTick;
-		if (iAdjustedCommandNumber >= iCritCommandNumber)
+		if (*it >= pCmd->command_number)
 		{
-			retVal = iTick;
+			retVal = *it;
 		}
 		else
 		{
@@ -165,7 +154,31 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 		CritTicks.pop_back();
 	}
 
+	if (auto netchan = I::EngineClient->GetNetChannelInfo())
+	{
+		const int lastOutSeqNr = netchan->m_nOutSequenceNr;
+		const int newOutSeqNr = pCmd->command_number - 1;
+		if (newOutSeqNr > lastOutSeqNr)
+		{
+			netchan->m_nOutSequenceNr = newOutSeqNr;
+		}
+	}
+
 	return retVal;
+}
+
+int32_t decrypt_or_encrypt_seed(CBaseCombatWeapon* pWeapon, const uint32_t seed)
+{
+	CBaseCombatWeapon* localplayer_wep = pWeapon;
+
+	if (!localplayer_wep) {
+		return 0;
+	}
+
+	uint32_t extra = (localplayer_wep->GetIndex() << 8) | I::EngineClient->GetLocalPlayer();
+	extra <<= (localplayer_wep->GetSlot() == 2) ? 8 : 0;
+
+	return extra ^ seed;
 }
 
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)

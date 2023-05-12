@@ -669,7 +669,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="packages.config" />
     <None Include="TeamFortress2\SDK\DirectX\d3dx9math.inl" />
     <None Include="TeamFortress2\SDK\DirectX\Include\D3DX10math.inl" />
     <None Include="TeamFortress2\SDK\DirectX\Include\d3dx9math.inl" />
@@ -678,5 +677,6 @@
     <None Include="TeamFortress2\SDK\DirectX\Include\xnamathmatrix.inl" />
     <None Include="TeamFortress2\SDK\DirectX\Include\xnamathmisc.inl" />
     <None Include="TeamFortress2\SDK\DirectX\Include\xnamathvector.inl" />
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
