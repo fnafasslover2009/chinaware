@@ -137,11 +137,11 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 	int retVal = -1;
 	bool popBack = false;
 
-	for (auto it = CritTicks.rbegin(); it != CritTicks.rend(); ++it)
+	for (const auto& tick : CritTicks)
 	{
-		if (*it >= pCmd->command_number)
+		if (tick >= pCmd->command_number)
 		{
-			retVal = *it;
+			retVal = tick;
 		}
 		else
 		{
@@ -152,16 +152,6 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 	if (popBack)
 	{
 		CritTicks.pop_back();
-	}
-
-	if (auto netchan = I::EngineClient->GetNetChannelInfo())
-	{
-		const int lastOutSeqNr = netchan->m_nOutSequenceNr;
-		const int newOutSeqNr = pCmd->command_number - 1;
-		if (newOutSeqNr > lastOutSeqNr)
-		{
-			netchan->m_nOutSequenceNr = newOutSeqNr;
-		}
 	}
 
 	return retVal;
