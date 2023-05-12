@@ -170,7 +170,6 @@ int CCritHack::LastGoodCritTick(const CUserCmd* pCmd)
 int32_t decrypt_or_encrypt_seed(CBaseCombatWeapon* pWeapon, const uint32_t seed)
 {
 	CBaseCombatWeapon* localplayer_wep = pWeapon;
-
 	if (!localplayer_wep) {
 		return 0;
 	}
@@ -180,6 +179,32 @@ int32_t decrypt_or_encrypt_seed(CBaseCombatWeapon* pWeapon, const uint32_t seed)
 
 	return extra ^ seed;
 }
+
+bool CCritHack::PureCrit(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, const bool lower_than)
+{
+    CBaseCombatWeapon* localplayer_wep = pWeapon;
+	const int32_t range{};
+
+    const auto random_seed = MD5_PseudoRandom(pCmd->command_number) & 0x7FFFFFFF;
+	int seed = decrypt_or_encrypt_seed(localplayer_wep, random_seed);
+	int32_t* pRandomSeed = I::RandomSeed;   // retarded, pasted :D
+
+	*pRandomSeed = static_cast<int32_t>(seed);
+	return lower_than ? std::rand() % 10000 < range : std::rand() % 10000 > range;
+}
+
+//auto CCritHack::CmdType(CBaseCombatWeapon* pWeapon, const bool skip = false) 
+//{
+//	const int idx = pWeapon->GetIndex();
+//
+//	if (idx <= 0 || idx >= 4096)
+//		return nullptr;
+//
+//	if (skip)
+//		return &skip_cmds[idx];
+//
+//	return &force_cmds[idx];
+//}
 
 void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 {
@@ -250,9 +275,9 @@ void CCritHack::Run(CUserCmd* pCmd)
 		if (ShouldCrit())
 		{
 			if (closestGoodTick < 0) { return; }
+			PureCrit(pCmd, pWeapon, true);
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED; //	trash poopy whatever who cares
-			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1; // force crits
 
 			if (pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER)
 			{
