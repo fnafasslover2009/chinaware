@@ -231,7 +231,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 		CritTicks.clear();
 	}
 
-	if (CritTicks.size() >= 256)
+	if (CritTicks.size() >= 256 && PureCrit(pCmd, pWeapon, true))
 	{
 		return;
 	}
@@ -272,10 +272,9 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
 	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
 	{
-		if (ShouldCrit())
+		if (ShouldCrit() && pWeapon->GetCritTokenBucket() >= 100)
 		{
 			if (closestGoodTick < 0) { return; }
-			PureCrit(pCmd, pWeapon, true);
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED; //	trash poopy whatever who cares
 
