@@ -238,6 +238,7 @@ void CCritHack::Run(CUserCmd* pCmd)
 			if (closestGoodTick < 0) { return; }
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;//	trash poopy whatever who cares
+			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1;
 
 			if (pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER)
 			{
