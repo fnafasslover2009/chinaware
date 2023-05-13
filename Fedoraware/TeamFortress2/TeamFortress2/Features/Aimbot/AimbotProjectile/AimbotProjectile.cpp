@@ -934,7 +934,6 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 {
 	vAngle -= G::PunchAngles;
 	Math::ClampAngles(vAngle);
-	bool* pSendPacket{};
 
 	switch (Vars::Aimbot::Projectile::AimMethod.Value)
 	{
@@ -951,7 +950,6 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 			// Silent
 			if (G::IsAttacking)
 				G::SilentTime = true;
-			    *pSendPacket = false;
 			    Utils::FixMovement(pCmd, vAngle);
 			    pCmd->viewangles = vAngle;
 
