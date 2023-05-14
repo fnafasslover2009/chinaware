@@ -2350,12 +2350,12 @@ void CMenu::Init(IDirect3DDevice9* pDevice)
 
 		constexpr ImWchar fontRange[]{ 0x0020, 0x00FF,0x0400, 0x044F, 0 }; // Basic Latin, Latin Supplement and Cyrillic
 
-		TahomaSmall = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 12.0f, &fontConfig, fontRange);
-		Tahoma = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 14.0f, &fontConfig, fontRange);
-		TahomaBold = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 18.0f, &fontConfig, fontRange);
+		TahomaSmall = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\tahoma.ttf", 12.0f, &fontConfig, fontRange);
+		Tahoma = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\tahoma.ttf", 14.0f, &fontConfig, fontRange);
+		TahomaBold = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\tahoma.ttf", 18.0f, &fontConfig, fontRange);
 
-		SectionFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 16.0f, &fontConfig, fontRange);
-		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahomabd.ttf", 20.0f, &fontConfig, fontRange);
+		SectionFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\tahoma.ttf", 16.0f, &fontConfig, fontRange);
+		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\tahomabd.ttf", 20.0f, &fontConfig, fontRange);
 
 		constexpr ImWchar iconRange[]{ ICON_MIN_MD, ICON_MAX_MD, 0 };
 		ImFontConfig iconConfig;
