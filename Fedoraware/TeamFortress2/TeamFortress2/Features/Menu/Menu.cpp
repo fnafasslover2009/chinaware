@@ -2355,7 +2355,7 @@ void CMenu::Init(IDirect3DDevice9* pDevice)
 		TahomaBold = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 18.0f, &fontConfig, fontRange);
 
 		SectionFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 16.0f, &fontConfig, fontRange);
-		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahomab.ttf", 20.0f, &fontConfig, fontRange);
+		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahomabd.ttf", 20.0f, &fontConfig, fontRange);
 
 		constexpr ImWchar iconRange[]{ ICON_MIN_MD, ICON_MAX_MD, 0 };
 		ImFontConfig iconConfig;
