@@ -77,9 +77,9 @@ public:
 	ImColor TextLight = { 240, 240, 240 };
 
 	// Fonts
-	ImFont* CalibriSmall = nullptr;	// 12px
-	ImFont* Calibri = nullptr;		// 14px
-	ImFont* CalibriBold = nullptr;	// 18px
+	ImFont* TahomaSmall = nullptr;	// 12px
+	ImFont* Tahoma = nullptr;		// 14px
+	ImFont* TahomaBold = nullptr;	// 18px
 
 	ImFont* SectionFont = nullptr;	// 16px
 	ImFont* TitleFont = nullptr;	// 20px

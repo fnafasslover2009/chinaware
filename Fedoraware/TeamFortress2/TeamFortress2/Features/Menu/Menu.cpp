@@ -116,7 +116,7 @@ void CMenu::DrawMenu()
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, BackgroundDark.Value);
 		if (ImGui::BeginChild("Content", { windowSize.x, windowSize.y - (TitleHeight + TabHeight + SubTabHeight) }, false, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::PushFont(Calibri);
+			ImGui::PushFont(Tahoma);
 			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, { 3.f, 2.f });
 
 			switch (CurrentTab)
@@ -140,7 +140,7 @@ void CMenu::DrawMenu()
 			if (!Vars::Menu::ModernDesign)
 			{
 				const auto hintHeight = ImGui::CalcTextSize(FeatureHint.c_str()).y;
-				drawList->AddText(Calibri, Calibri->FontSize, { windowPos.x + 10, windowPos.y + windowSize.y - (hintHeight + ImGui::GetStyle().ItemInnerSpacing.y) }, TextLight, FeatureHint.c_str());
+				drawList->AddText(Tahoma, Tahoma->FontSize, { windowPos.x + 10, windowPos.y + windowSize.y - (hintHeight + ImGui::GetStyle().ItemInnerSpacing.y) }, TextLight, FeatureHint.c_str());
 			}
 		}
 
@@ -1085,8 +1085,8 @@ void CMenu::MenuVisuals()
 							fontEspPickups,
 							fontMenu,
 							fontIndicator,
-							{ 0x0, "Calibri", 18, 800, FONTFLAG_ANTIALIAS},
-							{ 0x0, "Calibri", 12, 800, FONTFLAG_DROPSHADOW},
+							{ 0x0, "Tahoma", 18, 800, FONTFLAG_ANTIALIAS},
+							{ 0x0, "Tahoma", 12, 800, FONTFLAG_DROPSHADOW},
 						};
 
 						g_Draw.RemakeFonts(fonts);
@@ -2215,7 +2215,7 @@ void CMenu::Render(IDirect3DDevice9* pDevice)
 	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
-	ImGui::PushFont(Calibri);
+	ImGui::PushFont(Tahoma);
 
 	// Window that should always be visible
 	DrawKeybinds();
@@ -2350,12 +2350,12 @@ void CMenu::Init(IDirect3DDevice9* pDevice)
 
 		constexpr ImWchar fontRange[]{ 0x0020, 0x00FF,0x0400, 0x044F, 0 }; // Basic Latin, Latin Supplement and Cyrillic
 
-		CalibriSmall = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Calibri.ttf", 12.0f, &fontConfig, fontRange);
-		Calibri = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Calibri.ttf", 14.0f, &fontConfig, fontRange);
-		CalibriBold = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Calibri.ttf", 18.0f, &fontConfig, fontRange);
+		TahomaSmall = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 12.0f, &fontConfig, fontRange);
+		Tahoma = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 14.0f, &fontConfig, fontRange);
+		TahomaBold = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 18.0f, &fontConfig, fontRange);
 
-		SectionFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Calibri.ttf", 16.0f, &fontConfig, fontRange);
-		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Calibrib.ttf", 20.0f, &fontConfig, fontRange);
+		SectionFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahoma.ttf", 16.0f, &fontConfig, fontRange);
+		TitleFont = io.Fonts->AddFontFromFileTTF(u8"C:\\Windows\\Fonts\\Tahomab.ttf", 20.0f, &fontConfig, fontRange);
 
 		constexpr ImWchar iconRange[]{ ICON_MIN_MD, ICON_MAX_MD, 0 };
 		ImFontConfig iconConfig;
