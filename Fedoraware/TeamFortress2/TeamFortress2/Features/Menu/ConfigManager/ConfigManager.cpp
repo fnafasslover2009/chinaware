@@ -545,6 +545,7 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 				SAVE_VAR(Vars::AntiHack::AntiAim::YawFake);
 				SAVE_VAR(Vars::AntiHack::AntiAim::SpinSpeed);
 				SAVE_VAR(Vars::AntiHack::AntiAim::CustomRealPitch);
+				SAVE_VAR(Vars::AntiHack::AntiAim::CustomFakePitch);
 				SAVE_VAR(Vars::AntiHack::AntiAim::BaseYawOffset);
 				SAVE_VAR(Vars::AntiHack::AntiAim::CustomRealYaw);
 				SAVE_VAR(Vars::AntiHack::AntiAim::CustomFakeYaw);
@@ -560,6 +561,7 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 			{
 				SAVE_VAR(Vars::AntiHack::Resolver::Resolver);
 				SAVE_VAR(Vars::AntiHack::Resolver::IgnoreAirborne);
+				SAVE_VAR(Vars::AntiHack::Resolver::AutoResolveCheaters);
 			}
 		}
 
@@ -870,6 +872,7 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 				LOAD_VAR(Vars::AntiHack::AntiAim::YawFake);
 				LOAD_VAR(Vars::AntiHack::AntiAim::SpinSpeed);
 				LOAD_VAR(Vars::AntiHack::AntiAim::CustomRealPitch);
+				LOAD_VAR(Vars::AntiHack::AntiAim::CustomFakePitch);
 				LOAD_VAR(Vars::AntiHack::AntiAim::BaseYawOffset);
 				LOAD_VAR(Vars::AntiHack::AntiAim::CustomRealYaw);
 				LOAD_VAR(Vars::AntiHack::AntiAim::CustomFakeYaw);
@@ -885,6 +888,7 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 			{
 				LOAD_VAR(Vars::AntiHack::Resolver::Resolver);
 				LOAD_VAR(Vars::AntiHack::Resolver::IgnoreAirborne);
+				LOAD_VAR(Vars::AntiHack::Resolver::AutoResolveCheaters);
 			}
 		}
 

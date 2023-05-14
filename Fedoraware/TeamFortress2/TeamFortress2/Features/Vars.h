@@ -722,6 +722,7 @@ namespace Vars
 			inline CVar<float> BaseYawOffset{ 0.f };
 			inline CVar<float> SpinSpeed{ 15.f };
 			inline CVar<float> CustomRealPitch{ 0.f };
+			inline CVar<float> CustomFakePitch{ 0.f };
 			inline CVar<float> CustomRealYaw{ 0 };
 			inline CVar<float> CustomFakeYaw{ 0 };
 			inline CVar<float> FakeJitter{ 0 };

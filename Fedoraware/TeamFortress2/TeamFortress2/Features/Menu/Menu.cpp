@@ -1502,6 +1502,7 @@ void CMenu::MenuHvH()
 			if (Vars::AntiHack::Resolver::Resolver.Value)
 			{
 				WToggle("Ignore in-air", &Vars::AntiHack::Resolver::IgnoreAirborne.Value); HelpMarker("Doesn't resolve players who are in the air.");
+				WToggle("Auto-Resolve Cheaters", &Vars::AntiHack::Resolver::AutoResolveCheaters.Value);
 			}
 		} EndChild();
 
@@ -1512,13 +1513,17 @@ void CMenu::MenuHvH()
 			SectionTitle("Anti Aim");
 			WToggle("Enable Anti-aim", &Vars::AntiHack::AntiAim::Active.Value);
 			InputKeybind("Anti-aim Key", Vars::AntiHack::AntiAim::ToggleKey); HelpMarker("The key to toggle anti aim");
-			WCombo("Pitch", &Vars::AntiHack::AntiAim::Pitch.Value, { "None", "Zero", "Up", "Down", "Fake up", "Fake down", "Random", "Half Up", "Jitter", "Fake Up Custom", "Fake Down Custom" }); HelpMarker("Which way to look up/down");
+			WCombo("Pitch", &Vars::AntiHack::AntiAim::Pitch.Value, { "None", "Zero", "Up", "Down", "Fake up", "Fake down", "Random", "Half Up", "Jitter", "Fake Up Custom", "Fake Down Custom", "Custom"}); HelpMarker("Which way to look up/down");
 			WCombo("Base Yaw", &Vars::AntiHack::AntiAim::BaseYawMode.Value, { "Offset", "FOV Player", "FOV Player + Offset" });
 			WCombo("Real yaw", &Vars::AntiHack::AntiAim::YawReal.Value, { "None", "Forward", "Left", "Right", "Backwards", "Random", "Spin", "Edge", "On Hurt", "Custom", "Invert", "Jitter", "Jitter Random", "Jitter Flip", "Manual" }); HelpMarker("Which way to look horizontally");
 			WCombo("Fake yaw", &Vars::AntiHack::AntiAim::YawFake.Value, { "None", "Forward", "Left", "Right", "Backwards", "Random", "Spin", "Edge", "On Hurt", "Custom", "Invert", "Jitter", "Jitter Random", "Jitter Flip", "Manual" }); HelpMarker("Which way to appear to look horizontally");
-			if (Vars::AntiHack::AntiAim::Pitch.Value == 9 || Vars::AntiHack::AntiAim::Pitch.Value == 10)
+			if (Vars::AntiHack::AntiAim::Pitch.Value == 9 || Vars::AntiHack::AntiAim::Pitch.Value == 10 || Vars::AntiHack::AntiAim::Pitch.Value == 11)
 			{
 				WSlider("Custom Real Pitch", &Vars::AntiHack::AntiAim::CustomRealPitch.Value, -89.f, 89.f, "%.1f", 0);
+			}
+			if (Vars::AntiHack::AntiAim::Pitch.Value == 11)
+			{
+				WSlider("Custom Fake Pitch", &Vars::AntiHack::AntiAim::CustomFakePitch.Value, -89.f, 89.f, "%.1f", 0); HelpMarker("this shit is broken idk how to fix it");
 			}
 			if (Vars::AntiHack::AntiAim::Pitch.Value == 6 || Vars::AntiHack::AntiAim::YawFake.Value == 6 || Vars::AntiHack::AntiAim::YawReal.Value == 6)
 			{
