@@ -295,7 +295,7 @@ bool CMovementSimulation::StrafePrediction()
 
 void CMovementSimulation::RunTick(CMoveData& moveDataOut, Vec3& m_vecAbsOrigin)
 {
-	if (!I::CTFGameMovement || !m_pPlayer || bDontPredict || G::IsAttacking)
+	if (!I::CTFGameMovement || !m_pPlayer || bDontPredict)
 	{
 		return;
 	}
