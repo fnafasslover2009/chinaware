@@ -1,7 +1,7 @@
 #include "CritHack.h"
 #define MASK_SIGNED 0x7FFFFFFF
 
-// i hate crithack
+// Known Issues: Broken crit indicator, Max amount of crits u get in a row is 3, avoiding rand crits sucks, laggy when forcing crits.
 
 /* Returns whether random crits are enabled on the server */
 bool CCritHack::AreRandomCritsEnabled()
