@@ -231,13 +231,12 @@ bool CMovementSimulation::StrafePrediction()
 		}
 
 		const int iEntIndex = m_pPlayer->GetIndex();
-
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
-		if (static_cast<int>(mVelocityRecord.size()) < 1) { pCmd->buttons &= ~IN_ATTACK; return false; }
+		if (static_cast<int>(mVelocityRecord.size()) < 1) { G::WeaponCanAttack = false; return false; }
 
 		const int iSamples = fmin(15, mVelocityRecord.size());
-		if (!iSamples) { pCmd->buttons &= ~IN_ATTACK; return false; }
+		if (!iSamples) { G::WeaponCanAttack = false; return false; }
 
 		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
 		float flCompareYaw = flInitialYaw;
@@ -296,7 +295,7 @@ bool CMovementSimulation::StrafePrediction()
 
 void CMovementSimulation::RunTick(CMoveData& moveDataOut, Vec3& m_vecAbsOrigin)
 {
-	if (!I::CTFGameMovement || !m_pPlayer || bDontPredict)
+	if (!I::CTFGameMovement || !m_pPlayer || bDontPredict || G::IsAttacking)
 	{
 		return;
 	}
