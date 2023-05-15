@@ -186,7 +186,7 @@ void CAntiAim::SetupPitch(int iMode, CUserCmd* pCmd)
 		case 8: { pCmd->viewangles.x = bPitchFlip ? 89.f : -89.f; G::FakeViewAngles.x = bPitchFlip ? 89.f : -89.f; bPitchFlip = !bPitchFlip; return; }
 		case 9:
 		case 10: { pCmd->viewangles.x = CalculateCustomRealPitch(Vars::AntiHack::AntiAim::CustomRealPitch.Value, iMode == 10); G::FakeViewAngles.x = iMode == 10 ? 89.f : -89.f; return; }
-		case 11: { pCmd->viewangles.x = (Vars::AntiHack::AntiAim::CustomRealPitch.Value); G::FakeViewAngles.x = (Vars::AntiHack::AntiAim::CustomFakePitch.Value); return; } // TODO: FIX THIS SHIT, prob fake angle chams broken
+		case 11: { G::RealViewAngles.x = (Vars::AntiHack::AntiAim::CustomRealPitch.Value); G::FakeViewAngles.x = (Vars::AntiHack::AntiAim::CustomFakePitch.Value); return; } // TODO: FIX THIS SHIT, prob fake angle chams broken
 	}
 }
 

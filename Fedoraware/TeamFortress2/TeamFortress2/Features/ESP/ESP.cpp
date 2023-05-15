@@ -411,7 +411,7 @@ void CESP::DrawPlayers(CBaseEntity* pLocal)
 						int offset = 0;
 						if (Vars::ESP::Players::Distance.Value)
 						{
-							offset = 10;
+							offset = 25;
 						}
 
 						float fx, fy, fw, fh;

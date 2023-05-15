@@ -235,21 +235,22 @@ bool CMovementSimulation::StrafePrediction()
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
 		if (static_cast<int>(mVelocityRecord.size()) < 1)
-		{ return false; }
-		const int iSamples = fmin(15, mVelocityRecord.size());
-		if (!iSamples) { return false; }
+		{ pCmd->buttons &= ~IN_ATTACK; return false; }
 
-		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
+		const int iSamples = fmin(15, mVelocityRecord.size());
+		if (!iSamples)
+		{ pCmd->buttons &= ~IN_ATTACK; return false; }
+
+		flInitialYaw = m_MoveData.m_vecViewAngles.y; //Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
 		float flCompareYaw = flInitialYaw;
+		float flAverageYaw = 0.0f;
 
 		int i = 0;
 		for (; i < iSamples; i++)
 		{
 			const float flRecordYaw = Math::VelocityToAngles(mVelocityRecord.at(i)).y;
-
 			const float flDelta = RAD2DEG(Math::AngleDiffRad(DEG2RAD(flCompareYaw), DEG2RAD(flRecordYaw)));
 			flAverageYaw += flDelta;
-
 			flCompareYaw = flRecordYaw;
 		}
 
@@ -281,11 +282,7 @@ bool CMovementSimulation::StrafePrediction()
 
 		const float flMaxDelta = (get_velocity_degree(flAverageYaw) / fmaxf((float)iSamples, 2.f));
 
-		if (fabsf(flAverageYaw) > flMaxDelta) {
-			m_Velocities[m_pPlayer->GetIndex()].clear();
-			return false;
-		}	//	ugly fix for sweaty pricks
-
+		if (fabsf(flAverageYaw) > flMaxDelta) { m_Velocities[m_pPlayer->GetIndex()].clear(); return false; }
 		if (Vars::Debug::DebugInfo.Value)
 		{
 			Utils::ConLog("MovementSimulation", tfm::format("flAverageYaw calculated to %f", flAverageYaw).c_str(), { 83, 255, 83, 255 });

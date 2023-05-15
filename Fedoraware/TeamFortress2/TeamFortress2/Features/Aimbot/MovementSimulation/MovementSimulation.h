@@ -7,10 +7,12 @@ class CMovementSimulation
 public:
 	CBaseEntity* m_pPlayer = nullptr;
 	CMoveData m_MoveData = {};
+	
 
 private:
 	//void SetCurrentCommand(CBaseEntity* pPlayer, CUserCmd* pCmd);
 	void SetupMoveData(CBaseEntity* pPlayer, CMoveData* pMoveData);
+	CUserCmd* pCmd;
 
 private:
 	bool bFirstRunTick = true;
@@ -20,7 +22,7 @@ private:
 	float m_flOldFrametime = 0.0f;
 	int iTick = 0;
 
-	std::map<int, std::deque<Vec3>> m_Velocities;
+	std::map<int, std::deque<Vec3>> m_Velocities;	
 
 public:
 	bool Initialize(CBaseEntity* pPlayer);

@@ -962,7 +962,8 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 
 bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)
 {
-	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack);
+	const auto& Weapon = g_EntityCache.GetWeapon();
+	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking);
 }
 
 bool CAimbotProjectile::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
