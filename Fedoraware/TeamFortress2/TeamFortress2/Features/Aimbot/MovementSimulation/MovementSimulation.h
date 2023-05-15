@@ -8,7 +8,6 @@ public:
 	CBaseEntity* m_pPlayer = nullptr;
 	CMoveData m_MoveData = {};
 	
-
 private:
 	//void SetCurrentCommand(CBaseEntity* pPlayer, CUserCmd* pCmd);
 	void SetupMoveData(CBaseEntity* pPlayer, CMoveData* pMoveData);
