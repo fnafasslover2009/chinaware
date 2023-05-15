@@ -234,16 +234,13 @@ bool CMovementSimulation::StrafePrediction()
 
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
-		if (static_cast<int>(mVelocityRecord.size()) < 1)
-		{ pCmd->buttons &= ~IN_ATTACK; return false; }
+		if (static_cast<int>(mVelocityRecord.size()) < 1) { pCmd->buttons &= ~IN_ATTACK; return false; }
 
 		const int iSamples = fmin(15, mVelocityRecord.size());
-		if (!iSamples)
-		{ pCmd->buttons &= ~IN_ATTACK; return false; }
+		if (!iSamples) { pCmd->buttons &= ~IN_ATTACK; return false; }
 
-		flInitialYaw = m_MoveData.m_vecViewAngles.y; //Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
+		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
 		float flCompareYaw = flInitialYaw;
-		float flAverageYaw = 0.0f;
 
 		int i = 0;
 		for (; i < iSamples; i++)
