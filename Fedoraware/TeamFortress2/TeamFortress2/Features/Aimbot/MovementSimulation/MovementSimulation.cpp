@@ -233,10 +233,10 @@ bool CMovementSimulation::StrafePrediction()
 		const int iEntIndex = m_pPlayer->GetIndex();
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
-		if (static_cast<int>(mVelocityRecord.size()) < 1) { G::WeaponCanAttack = false; return false; }
+		if (static_cast<int>(mVelocityRecord.size()) < 1) { return false; }
 
 		const int iSamples = fmin(15, mVelocityRecord.size());
-		if (!iSamples) { G::WeaponCanAttack = false; return false; }
+		if (!iSamples) { return false; }
 
 		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
 		float flCompareYaw = flInitialYaw;
