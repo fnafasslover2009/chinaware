@@ -130,38 +130,24 @@ bool CAimbotProjectile::CalcProjAngle(const Vec3& vLocalPos, const Vec3& vTarget
 	const float fDist = vDelta.z;
 	const float fVel = projInfo.m_flVelocity;
 
-	if (fGravity == 0.0f)
+	if (!fGravity)
 	{
 		const Vec3 vAngleTo = Math::CalcAngle(vLocalPos, vTargetPos);
 		out.m_flPitch = -DEG2RAD(vAngleTo.x);
 		out.m_flYaw = DEG2RAD(vAngleTo.y);
 	}
-	else 
-	{
+	else
+	{	//	arch
 		const float fRoot = pow(fVel, 4) - fGravity * (fGravity * pow(fHyp, 2) + 2.f * fDist * pow(fVel, 2));
-		if (fRoot < 0.f) 
+		if (fRoot < 0.f)
 		{
 			return false;
 		}
-
-		const float fAngle1 = atan((pow(fVel, 2) - sqrt(fRoot)) / (fGravity * fHyp)); 
-		const float fAngle2 = atan((pow(fVel, 2) + sqrt(fRoot)) / (fGravity * fHyp)); 
-
-		out.m_flPitch = fAngle1;
-		if (fAngle2 > 0.0f)
-		{
-			float fTime1 = fHyp / (cos(fAngle1) * fVel);
-			float fTime2 = fHyp / (cos(fAngle2) * fVel);
-			if (fTime2 < fTime1)
-			{
-				out.m_flPitch = fAngle2;
-			}
-		}
-
+		out.m_flPitch = atan((pow(fVel, 2) - sqrt(fRoot)) / (fGravity * fHyp));
 		out.m_flYaw = atan2(vDelta.y, vDelta.x);
 	}
-
 	out.m_flTime = fHyp / (cos(out.m_flPitch) * fVel);
+
 	return true;
 }
 
@@ -960,10 +946,14 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 	}
 }
 
-bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)
+bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)  // THIS SHIT BETTER WORK
 {
 	const auto& Weapon = g_EntityCache.GetWeapon();
-	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking);
+	if (Weapon->GetReloadMode() != 0)
+	{
+		return false;
+	}
+	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking && Weapon->IsReadyToFire() );
 }
 
 bool CAimbotProjectile::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
