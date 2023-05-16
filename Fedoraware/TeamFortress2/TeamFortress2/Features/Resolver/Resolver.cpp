@@ -218,7 +218,17 @@ void PResolver::FrameStageNotify(){
 			}
 			}
 		}
-
+		if (Vars::AntiHack::Resolver::AutoResolveCheaters.Value) // prob does nothing idk
+		{
+			Priority Tpriority;
+			if (pEntity->GetIndex() == G::CurrentTargetIdx && Tpriority.Mode == 4)
+			{
+		        int iYawMode = GetYawMode(pEntity); 
+				int iPitchMode = GetPitchMode(pEntity);
+				iYawMode = 7;
+				iPitchMode = 4;
+			}	
+		}
 		SetAngles(vAdjustedAngle, pEntity);
 	}
 }
