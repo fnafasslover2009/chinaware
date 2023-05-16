@@ -953,7 +953,7 @@ bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)  // THIS SHIT BETTER WORK
 	{
 		return false;
 	}
-	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking && Weapon->IsReadyToFire() );
+	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking && Weapon->IsReadyToFire());
 }
 
 bool CAimbotProjectile::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
