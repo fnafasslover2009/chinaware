@@ -215,12 +215,11 @@ bool CMovementSimulation::StrafePrediction()
 	if (!shouldPredict) { return false; }
 
 	//fix in air strafe pred
-
 	if (bFirstRunTick)
-	{			//	we've already done the math, don't do it again
+	{
 		flAverageYaw = 0.f;
 		flInitialYaw = 0.f;
-		bFirstRunTick = false;	//	if we fail the math here, don't try it again, it won't work.
+		bFirstRunTick = false;
 
 		if (const auto& pLocal = g_EntityCache.GetLocal())
 		{
@@ -233,28 +232,28 @@ bool CMovementSimulation::StrafePrediction()
 		const int iEntIndex = m_pPlayer->GetIndex();
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
-		if (static_cast<int>(mVelocityRecord.size()) < 1) { return false; }
+		if (static_cast<int>(mVelocityRecord.size()) < 2) { return false; }
 
 		const int iSamples = fmin(15, mVelocityRecord.size());
-		if (!iSamples) { return false; }
+		if (iSamples < 2) { return false; }
 
-		flInitialYaw = m_MoveData.m_vecViewAngles.y;		//Math::VelocityToAngles(m_MoveData.m_vecVelocity).y;
+		flInitialYaw = m_MoveData.m_vecViewAngles.y;
+
 		float flCompareYaw = flInitialYaw;
 
-		int i = 0;
-		for (; i < iSamples; i++)
+		for (int i = 0; i < iSamples - 1; i++)
 		{
-			const float flRecordYaw = Math::VelocityToAngles(mVelocityRecord.at(i)).y;
-			const float flDelta = RAD2DEG(Math::AngleDiffRad(DEG2RAD(flCompareYaw), DEG2RAD(flRecordYaw)));
+			const float flRecordYaw1 = Math::VelocityToAngles(mVelocityRecord.at(i)).y;
+			const float flRecordYaw2 = Math::VelocityToAngles(mVelocityRecord.at(i + 1)).y;
+
+			const float flDelta = RAD2DEG(Math::AngleDiffRad(DEG2RAD(flRecordYaw1), DEG2RAD(flRecordYaw2)));
 			flAverageYaw += flDelta;
-			flCompareYaw = flRecordYaw;
+			flCompareYaw = flRecordYaw2;
 		}
 
-		flAverageYaw /= i;
+		flAverageYaw /= (iSamples - 1);
 
-		//while (flAverageYaw > 360.f) { flAverageYaw -= 360.f; }
-		//while (flAverageYaw < -360.f) { flAverageYaw += 360.f; } just no
-		 fmod(flAverageYaw + 180.0f, 360.0f) - 180.0f;
+		flAverageYaw = fmod(flAverageYaw + 180.0f, 360.0f) - 180.0f;
 
 		if (fabsf(flAverageYaw) < Vars::Aimbot::Projectile::StrafePredictionMinDifference.Value)
 		{
@@ -266,19 +265,18 @@ bool CMovementSimulation::StrafePrediction()
 		{
 			auto tmp = RAD2DEG(atan(30.0f / velocity));
 
-			#define CheckIfNonValidNumber(x) (fpclassify(x) == FP_INFINITE || fpclassify(x) == FP_NAN || fpclassify(x) == FP_SUBNORMAL)
-			if (CheckIfNonValidNumber(tmp) || tmp > 90.0f)
+			if (std::isinf(tmp) || std::isnan(tmp) || std::fpclassify(tmp) == FP_SUBNORMAL || tmp > 90.0f)
 				return 90.0f;
-
 			else if (tmp < 0.0f)
 				return 0.0f;
 			else
 				return tmp;
 		};
 
-		const float flMaxDelta = (get_velocity_degree(flAverageYaw) / fmaxf((float)iSamples, 2.f));
+		const float flMaxDelta = (get_velocity_degree(flAverageYaw) / fmaxf((float)(iSamples - 1), 2.f));
 
 		if (fabsf(flAverageYaw) > flMaxDelta) { m_Velocities[m_pPlayer->GetIndex()].clear(); return false; }
+
 		if (Vars::Debug::DebugInfo.Value)
 		{
 			Utils::ConLog("MovementSimulation", tfm::format("flAverageYaw calculated to %f", flAverageYaw).c_str(), { 83, 255, 83, 255 });

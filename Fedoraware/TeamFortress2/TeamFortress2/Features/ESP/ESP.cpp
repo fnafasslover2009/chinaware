@@ -411,7 +411,7 @@ void CESP::DrawPlayers(CBaseEntity* pLocal)
 						int offset = 0;
 						if (Vars::ESP::Players::Distance.Value)
 						{
-							offset = 25;
+							offset = 30;
 						}
 
 						float fx, fy, fw, fh;
@@ -742,7 +742,7 @@ void CESP::DrawPlayers(CBaseEntity* pLocal)
 				float SPEED_FREQ = 145 / 0.65f;
 				int player_hp = flHealth;
 				int player_hp_max = flMaxHealth;
-				static float prev_player_hp[75];
+				static float prev_player_hp[75]{};
 
 				if (prev_player_hp[Player->GetIndex()] > player_hp)
 					prev_player_hp[Player->GetIndex()] -= SPEED_FREQ * I::GlobalVars->frametime;

@@ -405,7 +405,7 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 	const float flBBoxScale = Vars::Aimbot::Projectile::ScanScale.Value; // stop shoot flor (:D)
 
 	const Vec3 vMaxs = I::GameMovement->GetPlayerMaxs(bIsDucking) * flBBoxScale;
-	const Vec3 vMins = Vec3(-vMaxs.x, -vMaxs.y, bIsDucking ? -vMaxs.z * flBBoxScale : -vMaxs.z);
+	const auto vMins = Vec3(-vMaxs.x, -vMaxs.y, vMaxs.z - vMaxs.z * flBBoxScale);
 
 	const Vec3 vHeadDelta = Utils::GetHeadOffset(pEntity);
 
@@ -949,10 +949,6 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)  // THIS SHIT BETTER WORK
 {
 	const auto& Weapon = g_EntityCache.GetWeapon();
-	if (Weapon->GetReloadMode() != 0)
-	{
-		return false;
-	}
 	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking && Weapon->IsReadyToFire());
 }
 
