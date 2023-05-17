@@ -7,7 +7,6 @@
 #include "AutoDetonate/AutoDetonate.h"
 #include "AutoBlast/AutoBlast.h"
 #include "AutoUber/AutoUber.h"
-#include "AutoVaccinator/AutoVaccinator.h"
 
 bool CAuto::ShouldRun(CBaseEntity* pLocal)
 {
@@ -54,8 +53,7 @@ void CAuto::Run(CUserCmd* pCmd)
 			F::AutoStab.Run(pLocal, pWeapon, pCmd);
 			F::AutoDetonate.Run(pLocal, pWeapon, pCmd);
 			F::AutoAirblast.Run(pLocal, pWeapon, pCmd);
-			//F::AutoUber.Run(pLocal, pWeapon, pCmd);
-			F::AutoVaccinator.Run(pLocal, pWeapon, pCmd);
+			F::AutoUber.Run(pLocal, pWeapon, pCmd);
 		}
 	}
 }

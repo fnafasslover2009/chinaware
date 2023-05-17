@@ -7,10 +7,10 @@
 
 constexpr static int CHANGE_TIMER = 5; // i am lazy to change code, this should be fine.
 
-int m_nSwitchCounter = 0;
-int m_nSwitchTicks = 0;
-int m_nDesiredResistance = 0;
-int m_nSwitchTimer = 0;
+int vaccChangeState = 0;
+int vaccChangeTicks = 0;
+int vaccIdealResist = 0;
+int vaccChangeTimer = 0;
 
 int BulletDangerValue(CBaseEntity* pPatient)
 {
@@ -309,7 +309,7 @@ int OptimalResistance(CBaseEntity* pPatient, bool* pShouldPop)
 		return -1;
 	}
 
-	m_nSwitchTimer = CHANGE_TIMER;
+	vaccChangeTimer = CHANGE_TIMER;
 
 	// vaccinator_change_timer = (int) change_timer;
 	if (bulletDanger >= fireDanger && bulletDanger >= blastDanger) { return 0; }
@@ -321,53 +321,53 @@ int OptimalResistance(CBaseEntity* pPatient, bool* pShouldPop)
 void SetResistance(int pResistance)
 {
 	Math::Clamp(pResistance, 0, 2);
-	m_nSwitchTimer = CHANGE_TIMER;
-	m_nDesiredResistance = pResistance;
+	vaccChangeTimer = CHANGE_TIMER;
+	vaccIdealResist = pResistance;
 
 	const int curResistance = CurrentResistance();
 	if (pResistance == curResistance) { return; }
 	if (pResistance > curResistance)
 	{
-		m_nSwitchCounter = pResistance - curResistance;
+		vaccChangeState = pResistance - curResistance;
 	}
 	else
 	{
-		m_nSwitchCounter = 3 - curResistance + pResistance;
+		vaccChangeState = 3 - curResistance + pResistance;
 	}
 }
 
 void DoResistSwitching(CUserCmd* pCmd)
 {
-	if (m_nSwitchTimer > 0)
+	if (vaccChangeTimer > 0)
 	{
-		m_nSwitchTimer--;
+		vaccChangeTimer--;
 	}
 	else
 	{
-		m_nSwitchTimer = CHANGE_TIMER;
+		vaccChangeTimer = CHANGE_TIMER;
 	}
 
-	if (!m_nSwitchCounter) { return; }
-	if (CurrentResistance() == m_nDesiredResistance)
+	if (!vaccChangeState) { return; }
+	if (CurrentResistance() == vaccIdealResist)
 	{
-		m_nSwitchTicks = 0;
-		m_nSwitchCounter = 0;
+		vaccChangeTicks = 0;
+		vaccChangeState = 0;
 		return;
 	}
 	if (pCmd->buttons & IN_RELOAD)
 	{
-		m_nSwitchTicks = 8;
+		vaccChangeTicks = 8;
 		return;
 	}
-	if (m_nSwitchTicks <= 0)
+	if (vaccChangeTicks <= 0)
 	{
 		pCmd->buttons |= IN_RELOAD;
-		m_nSwitchCounter--;
-		m_nSwitchTicks = 8;
+		vaccChangeState--;
+		vaccChangeTicks = 8;
 	}
 	else
 	{
-		m_nSwitchTicks--;
+		vaccChangeTicks--;
 	}
 }
 
