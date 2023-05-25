@@ -338,7 +338,7 @@ bool CConfigManager::SaveConfig(const std::string& configName)
 				SAVE_VAR(Vars::Aimbot::Projectile::BounceKey);
 				SAVE_VAR(Vars::Aimbot::Projectile::SplashPrediction);
 				SAVE_VAR(Vars::Aimbot::Projectile::PredictionTime);
-				SAVE_VAR(Vars::Aimbot::Projectile::ScanScale);
+				//SAVE_VAR(Vars::Aimbot::Projectile::ScanScale);
 				SAVE_VAR(Vars::Aimbot::Projectile::ChargeLooseCannon);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionAir);
 				SAVE_VAR(Vars::Aimbot::Projectile::StrafePredictionGround);
@@ -665,7 +665,7 @@ bool CConfigManager::LoadConfig(const std::string& configName)
 				LOAD_VAR(Vars::Aimbot::Projectile::BounceKey);
 				LOAD_VAR(Vars::Aimbot::Projectile::SplashPrediction);
 				LOAD_VAR(Vars::Aimbot::Projectile::PredictionTime);
-				LOAD_VAR(Vars::Aimbot::Projectile::ScanScale);
+				//LOAD_VAR(Vars::Aimbot::Projectile::ScanScale);
 				LOAD_VAR(Vars::Aimbot::Projectile::ChargeLooseCannon);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionAir);
 				LOAD_VAR(Vars::Aimbot::Projectile::StrafePredictionGround);

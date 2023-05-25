@@ -103,7 +103,7 @@ namespace Vars
 			inline CVar<int> SortMethod{ 0 }; //0 - FOV,		1 - Distance
 			inline CVar<int> AimMethod{ 1 }; //0 - Normal,	1 - Silent
 			inline CVar<int> AimPosition{ 3 }; // 0/head, 1/body, 2/feet, 3/auto
-			inline CVar<float> ScanScale{ 0.78f }; // how to scale the points. 0.78 is a good number, huntsman bugs at anything below 0.76
+			//inline CVar<float> ScanScale{ 0.78f }; // how to scale the points. 0.78 is a good number, huntsman bugs at anything below 0.76
 			inline CVar<int> AllowedHitboxes{ 0b000 }; // 111, Feet, Body, Head.
 			inline CVar<bool> FeetAimIfOnGround{ false };
 			inline CVar<int> BounceKey{ 0x0 };

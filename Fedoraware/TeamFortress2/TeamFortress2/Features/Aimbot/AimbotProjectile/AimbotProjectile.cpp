@@ -402,10 +402,18 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 
 	const bool bIsDucking = (pEntity->m_bDucked() || pEntity->m_fFlags() & FL_DUCKING);
 
-	const float flBBoxScale = Vars::Aimbot::Projectile::ScanScale.Value; // stop shoot flor (:D)
+	float flBBoxScale;
+	if (G::WeaponCanHeadShot) // really annoying to set this every game when playing huntsman
+	{ 
+		flBBoxScale = 0.90f; 
+	}
+	else
+	{ 
+		flBBoxScale = 0.70f; 
+	}
 
 	const Vec3 vMaxs = I::GameMovement->GetPlayerMaxs(bIsDucking) * flBBoxScale;
-	const auto vMins = Vec3(-vMaxs.x, -vMaxs.y, vMaxs.z - vMaxs.z * flBBoxScale);
+	const Vec3 vMins = Vec3(-vMaxs.x, -vMaxs.y, vMaxs.z - vMaxs.z * flBBoxScale);
 
 	const Vec3 vHeadDelta = Utils::GetHeadOffset(pEntity);
 
@@ -572,7 +580,7 @@ std::optional<Vec3> CAimbotProjectile::GetAimPosBuilding(CBaseEntity* pLocal, CB
 {
 	const Vec3 vLocalPos = pLocal->GetShootPos();
 
-	const float bboxScale = std::max(Vars::Aimbot::Projectile::ScanScale.Value - 0.05f, 0.5f); // set the maximum scale for buildings at .95f
+	const float bboxScale = std::max(1.0f - 0.05f, 0.5f); // set the maximum scale for buildings at .95f
 
 	const Vec3 vMins = pEntity->GetCollideableMins() * bboxScale;
 	const Vec3 vMaxs = pEntity->GetCollideableMaxs() * bboxScale;
@@ -920,6 +928,9 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 {
 	vAngle -= G::PunchAngles;
 	Math::ClampAngles(vAngle);
+	const QAngle oldView = pCmd->viewangles;
+	const float oldSidemove = pCmd->sidemove;
+	const float oldForwardmove = pCmd->forwardmove;
 
 	switch (Vars::Aimbot::Projectile::AimMethod.Value)
 	{
@@ -934,11 +945,23 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 		case 1:
 		{
 			// Silent
-			if (G::IsAttacking)
-				G::SilentTime = true;
-			    Utils::FixMovement(pCmd, vAngle);
-			    pCmd->viewangles = vAngle;
+			bool STime = true;
+			if (pWeapon->GetNextAttack() > I::GlobalVars->curtime)
+				STime = false;
 
+			if (G::IsAttacking && ShouldFire(pCmd) && STime && !pWeapon->IsInReload())
+			{
+				G::ForceSendPacket = false;
+				Utils::FixMovement(pCmd, vAngle);
+				pCmd->viewangles = vAngle;
+			}
+			else 
+			{
+				G::ForceSendPacket = true;
+			    pCmd->viewangles = oldView;
+				pCmd->sidemove = oldSidemove;
+				pCmd->forwardmove = oldForwardmove;
+			}
 			break;
 		}
 
@@ -948,8 +971,7 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 
 bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)  // THIS SHIT BETTER WORK
 {
-	const auto& Weapon = g_EntityCache.GetWeapon();
-	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && !G::IsAttacking && Weapon->IsReadyToFire());
+	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack);
 }
 
 bool CAimbotProjectile::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
@@ -1126,7 +1148,8 @@ void CAimbotProjectile::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUs
 							 ? (pCmd->buttons & IN_ATTACK)
 							 : F::AimbotGlobal.IsKeyDown());
 	if (!bShouldAim) { return; }
-
+	if (!pWeapon->IsReadyToFire()) { return; }
+ 
 	Target_t target{};
 	if (GetTarget(pLocal, pWeapon, pCmd, target) || GetSplashTarget(pLocal, pWeapon, pCmd, target))
 	{
@@ -1231,4 +1254,5 @@ void CAimbotProjectile::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUs
 			Aim(pCmd, pWeapon, target.m_vAngleTo);
 		}
 	}
+	
 }
