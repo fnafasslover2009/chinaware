@@ -150,7 +150,6 @@
     <ClCompile Include="TeamFortress2\Hooks\Detours\DataTable_Warning.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\COcclusionSystem_IsOccluded.cpp" />
     <ClCompile Include="TeamFortress2\Features\TickHandler\TickHandler.cpp" />
-    <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseViewModel_ShouldFlipViewModel.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\FX_FireBullets.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_BaseAnimating_MaintainSequenceTransitions.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\CStaticPropMgr_ComputePropOpacity.cpp" />
@@ -161,6 +160,8 @@
     <ClCompile Include="TeamFortress2\Hooks\Detours\VGui_MenuBuilder_AddMenuItem.cpp" />
     <ClCompile Include="TeamFortress2\Hooks\Detours\C_PlayerResource_GetTeamColor.cpp" />
     <ClCompile Include="TeamFortress2\Features\ESP\GetWeaponName\GetWeaponName.cpp" />
+    <ClCompile Include="TeamFortress2\Features\Auto\AutoVaccinator\AutoVaccinator.cpp" />
+    <ClCompile Include="TeamFortress2\SDK\Includes\Classes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeamFortress2\Features\AutoQueue\AutoQueue.h" />
@@ -664,6 +665,7 @@
     <ClInclude Include="TeamFortress2\Features\Misc\Notifications\Notifications.h" />
     <ClInclude Include="TeamFortress2\Features\ESP\LocalConditions\LocalConditions.h" />
     <ClInclude Include="TeamFortress2\Features\ESP\GetWeaponName\GetWeaponName.h" />
+    <ClInclude Include="TeamFortress2\Features\Auto\AutoVaccinator\AutoVaccinator.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="TeamFortress2\SDK\DirectX\d3dx9.lib" />

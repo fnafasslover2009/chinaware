@@ -405,7 +405,7 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 	float flBBoxScale;
 	if (G::WeaponCanHeadShot) // really annoying to set this every game when playing huntsman
 	{ 
-		flBBoxScale = 0.90f; 
+		flBBoxScale = 0.98f; 
 	}
 	else
 	{ 
@@ -721,7 +721,7 @@ bool CAimbotProjectile::WillProjectileHit(CBaseEntity* pLocal, CBaseCombatWeapon
 	//	UTIL_TraceHull( vecEye, vecSrc, -Vector(8,8,8), Vector(8,8,8), MASK_SOLID_BRUSHONLY, &traceFilter, &trace ); @tf_weaponbase_gun.cpp L696 pills
 	Utils::TraceHull(vVisCheck, vPredictedPos, hullSize * 1.01f, hullSize * -1.01f, MASK_SHOT_HULL, &traceFilter, &trace);
 
-	return !trace.DidHit() && !trace.bStartSolid;
+	return !trace.DidHitNonWorldEntity() && !trace.bStartSolid;
 }
 
 std::vector<Target_t> CAimbotProjectile::GetTargets(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon)
@@ -949,7 +949,7 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 			if (pWeapon->GetNextAttack() > I::GlobalVars->curtime)
 				STime = false;
 
-			if (G::IsAttacking && ShouldFire(pCmd) && STime && !pWeapon->IsInReload())
+			if (G::IsAttacking && ShouldFire(pCmd) && STime)
 			{
 				G::ForceSendPacket = false;
 				Utils::FixMovement(pCmd, vAngle);
@@ -971,7 +971,8 @@ void CAimbotProjectile::Aim(CUserCmd* pCmd, CBaseCombatWeapon* pWeapon, Vec3& vA
 
 bool CAimbotProjectile::ShouldFire(CUserCmd* pCmd)  // THIS SHIT BETTER WORK
 {
-	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack);
+	const auto& pWeapon = g_EntityCache.GetWeapon();
+	return (Vars::Aimbot::Global::AutoShoot.Value && G::WeaponCanAttack && pWeapon->IsReadyToFire());
 }
 
 bool CAimbotProjectile::IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon)
@@ -1148,8 +1149,6 @@ void CAimbotProjectile::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUs
 							 ? (pCmd->buttons & IN_ATTACK)
 							 : F::AimbotGlobal.IsKeyDown());
 	if (!bShouldAim) { return; }
-	if (!pWeapon->IsReadyToFire()) { return; }
- 
 	Target_t target{};
 	if (GetTarget(pLocal, pWeapon, pCmd, target) || GetSplashTarget(pLocal, pWeapon, pCmd, target))
 	{
@@ -1254,5 +1253,4 @@ void CAimbotProjectile::Run(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUs
 			Aim(pCmd, pWeapon, target.m_vAngleTo);
 		}
 	}
-	
 }
