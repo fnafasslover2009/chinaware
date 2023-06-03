@@ -512,6 +512,7 @@ void CAimbotHitscan::Aim(CUserCmd* pCmd, Vec3& vAngle)
 {
 	vAngle -= G::PunchAngles;
 	Math::ClampAngles(vAngle);
+	const auto& pWeapon = g_EntityCache.GetWeapon();
 
 	switch (Vars::Aimbot::Hitscan::AimMethod.Value)
 	{
@@ -547,9 +548,12 @@ void CAimbotHitscan::Aim(CUserCmd* pCmd, Vec3& vAngle)
 
 		case 2: //Silent
 		{
+			bool STime = true;
+			if (pWeapon->GetNextAttack() > I::GlobalVars->curtime)
+				 STime = false;
 			if (Vars::Aimbot::Global::FlickatEnemies.Value && !G::ShouldShift)
 			{
-				if (G::IsAttacking)
+				if (G::IsAttacking && STime)
 				{
 					Utils::FixMovement(pCmd, vAngle);
 					pCmd->viewangles = vAngle;

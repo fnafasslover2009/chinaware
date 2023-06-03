@@ -31,6 +31,8 @@ class CAimbotProjectile
 	bool GetProjectileInfo(CBaseCombatWeapon* pWeapon, ProjectileInfo_t& out);
 	bool CalcProjAngle(const Vec3& vLocalPos, const Vec3& vTargetPos, const ProjectileInfo_t& projInfo,
 					   Solution_t& out);
+	void GetProjectileBounds(CBaseCombatWeapon* pWeapon, Vector* vMins, Vector* vMaxs);
+	bool RaycastProjectileTrajectory(CBaseEntity* pLocal, CBaseEntity* pTarget, const ETargetType targetType, const Vector& vShootPos, const Vector& vProjVel, const float fProjGravity, const float fTime, const bool bDraw, const float fRes);
 	bool SolveProjectile(CBaseEntity* pLocal, CBaseCombatWeapon* pWeapon, CUserCmd* pCmd, Predictor_t& predictor,
 						 const ProjectileInfo_t& projInfo, Solution_t& out);
 

@@ -225,29 +225,17 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const auto& pWeapon = g_EntityCache.GetWeapon();
 	if (!pWeapon || !pWeapon->CanFireCriticalShot(false)) { return; }
 
-	ScanForCrits(pCmd, 50); //	fill our vector slowly.
+	ScanForCrits(pCmd, 50); //	fill our vector slowly
 
 	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
 	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
 	{
-		if (ShouldCrit() && pWeapon->GetCritTokenBucket() >= 100)
+		if (ShouldCrit() && (pWeapon->GetCritTokenBucket() >= 100) && CanCrit() == true)
 		{
 			if (closestGoodTick < 0) { return; }
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;//	trash poopy whatever who cares
 			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1;
-
-			if (pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_FLAMETHROWER)
-			{
-				auto old_ammo_count = pWeapon->GetAmmo();
-				static auto new_ammo_count = old_ammo_count;
-
-				const auto has_fired_bullet = new_ammo_count != old_ammo_count;
-				if (!has_fired_bullet)
-				{
-					return;
-				}
-			}
 		}
 		else if (Vars::CritHack::AvoidRandom.Value) //	we don't want to crit
 		{
@@ -265,6 +253,68 @@ void CCritHack::Run(CUserCmd* pCmd)
 	}
 }
 
+bool CCritHack::CanCrit()
+{
+	const auto pWeapon = g_EntityCache.GetWeapon();
+	if (!pWeapon)
+		return false;
+
+	int CritCount = pWeapon->GetCrits() + 1;
+	int CritAttempts = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(pWeapon) + 0xA60) + 1;
+
+	float flMultiply = 0.5f;
+	if (G::CurWeaponType != EWeaponType::MELEE)
+		flMultiply = Math::RemapValClamped(static_cast<float>(CritCount) / static_cast<float>(CritAttempts), 0.1f, 1.f, 1.f, 3.f);
+
+	float flToRemove = flMultiply * 3.0f;
+
+	CTFPlayerResource* pPlayerResource = g_EntityCache.GetPR();
+	if (!pPlayerResource)
+		return false;
+
+	float added_per_shot = 0.0f;
+	int WeaponIndex = pWeapon->GetWeaponID(); 
+	if (!WeaponIndex) return false;
+
+	added_per_shot = static_cast<float>(pPlayerResource->GetDamage(WeaponIndex));
+	added_per_shot = Utils::ATTRIB_HOOK_FLOAT(added_per_shot, "mult_dmg", pWeapon, 0x0, true);
+
+	float amount = added_per_shot * flToRemove;
+
+	if (amount > pWeapon->GetCritTokenBucket())
+		return false;
+
+	return true;
+}
+
+float CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash) // pasteddddd
+{
+	const auto& pLocal = g_EntityCache.GetLocal();
+	CTFPlayerResource* pPlayerResource = g_EntityCache.GetPR();
+
+	if (pEvent && I::EngineClient->GetPlayerForUserID(pEvent->GetInt("attacker")) == pLocal->GetIndex())
+	{
+		if (uNameHash == FNV1A::HashConst("player_hurt"))
+		{
+			float roundDamage = static_cast<float>(pPlayerResource->GetDamage(pLocal->GetIndex()));
+			float meleeDamage = static_cast<float>(pEvent->GetInt("damageamount"));
+			float cachedDamage = roundDamage - meleeDamage;
+
+			if (cachedDamage == roundDamage)
+				return 0.0f;
+
+			DVariant blud;
+			float sentChance = blud.m_Float;
+			float critDamage = (3.0f * cachedDamage * sentChance) / (2.0f * sentChance + 1);
+
+			float normalizedDamage = critDamage / 3.0f;
+			return normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage));
+		}
+	}
+
+	return 0.0f;
+}
+
 void CCritHack::Draw()
 {
 	if (!Vars::CritHack::Indicators.Value) { return; }
@@ -278,38 +328,43 @@ void CCritHack::Draw()
 
 	const int x = Vars::CritHack::IndicatorPos.c;
 	int currentY = Vars::CritHack::IndicatorPos.y;
+	
 
 	const float bucket = *reinterpret_cast<float*>(pWeapon + 0xA54);
 	const int seedRequests = *reinterpret_cast<int*>(pWeapon + 0xA5C);
 
+	// Observance Calculations, Just paste it hehe
+	float badobserved = pWeapon->GetObservedCritChance(); // TODO: Improve this and have the server calculate it everytime
+	float crit_mult = static_cast<float>(pWeapon->GetCritMult());
+	float chance = 0.02f;
+	if (G::CurWeaponType == EWeaponType::MELEE) { chance = 0.15f; }
+	float flMultCritChance = Utils::ATTRIB_HOOK_FLOAT(crit_mult * chance, "mult_crit_chance", pWeapon, 0, 1);
+	float NeededChance = flMultCritChance + 0.1f;
+
 	int longestW = 40;
 
 	if (Vars::Debug::DebugInfo.Value)
-	{
+	{ 
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 255, 255, 255, }, ALIGN_CENTERHORIZONTAL, tfm::format("%x", reinterpret_cast<float*>(pWeapon + 0xA54)).c_str());
 	}
-	// Are we currently forcing crits?
-	if (ShouldCrit() && NoRandomCrits(pWeapon) == false)
+	if (ShouldCrit() && NoRandomCrits(pWeapon) == false) // Are we currently forcing crits?
 	{
-		if (CritTicks.size() > 0)
-		{ 
+		if (CritTicks.size() > 0 && (NeededChance >= badobserved) && CanCrit() == true)
+		{
 			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 0, 255, 0, 255 }, ALIGN_CENTERHORIZONTAL, "Forcing Crits");
 		}
 	}
-	//Can this weapon do random crits?
-	if (NoRandomCrits(pWeapon) == true)
+	if (NoRandomCrits(pWeapon) == true) //Can this weapon do random crits?
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 95, 95, 255 }, ALIGN_CENTERHORIZONTAL, L"No Random Crits");
 	}
-	//Crit banned check
-	if (CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false)
+	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
+	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
+	const std::wstring bucketstr = L"Crit Limit: " + std::to_wstring(badobserved) + L" / " + std::to_wstring(NeededChance);
+	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || NeededChance <= badobserved || CanCrit() == false) //Crit banned check
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255,0,0,255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
 	}
-	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
-	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
-	const std::wstring bucketstr = L"Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L"/" + std::to_wstring(static_cast<int>(bucketCap));
-	// crit bucket string (this sucks)
 	if (NoRandomCrits(pWeapon) == false)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 181, 181, 181, 255 }, ALIGN_CENTERHORIZONTAL, bucketstr.c_str());

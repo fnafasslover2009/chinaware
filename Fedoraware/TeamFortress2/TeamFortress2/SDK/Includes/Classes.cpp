@@ -5,5 +5,5 @@ bool CGameTrace::DidHitNonWorldEntity() const
 {
     CBaseEntity * m_pEntity = nullptr;
 	CClientEntityList entityList;
-	return m_pEntity != NULL && m_pEntity == entityList.GetClientEntity(0);;
+	return m_pEntity != NULL && m_pEntity == entityList.GetClientEntity(0);
 }
