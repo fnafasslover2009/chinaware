@@ -8,7 +8,7 @@ private:
 	bool IsEnabled();
 	bool ShouldCrit();
 	bool CanCrit();
-	float ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash);
+	bool ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash);
 	bool NoRandomCrits(CBaseCombatWeapon* pWeapon);
 	//bool ShouldForceMelee(CBaseCombatWeapon* pWeapon);	//	compare distances between local & enemies, force crits if we are within swing range of enemy.
 	bool IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon);
