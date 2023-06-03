@@ -273,7 +273,7 @@ bool CCritHack::CanCrit()
 		return false;
 
 	float added_per_shot = 0.0f;
-	int WeaponIndex = pWeapon->GetWeaponID(); 
+	int WeaponIndex = pWeapon->GetIndex(); 
 	if (!WeaponIndex) return false;
 
 	added_per_shot = static_cast<float>(pPlayerResource->GetDamage(WeaponIndex));
@@ -292,7 +292,7 @@ float CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash) // pa
 	const auto& pLocal = g_EntityCache.GetLocal();
 	CTFPlayerResource* pPlayerResource = g_EntityCache.GetPR();
 
-	if (pEvent && I::EngineClient->GetPlayerForUserID(pEvent->GetInt("attacker")) == pLocal->GetIndex())
+	if (pLocal)
 	{
 		if (uNameHash == FNV1A::HashConst("player_hurt"))
 		{
