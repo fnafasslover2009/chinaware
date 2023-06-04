@@ -345,6 +345,9 @@ void CCritHack::Draw()
 	const float bucket = *reinterpret_cast<float*>(pWeapon + 0xA54);
 	const int seedRequests = *reinterpret_cast<int*>(pWeapon + 0xA5C);
 
+	CGameEvent* pEvent = nullptr;
+	const FNV1A_t uNameHash = 0;
+
 	int longestW = 40;
 
 	if (Vars::Debug::DebugInfo.Value)
@@ -365,7 +368,7 @@ void CCritHack::Draw()
 	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
 	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
 	const std::wstring bucketstr = L"Crit Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L" / " + std::to_wstring(static_cast<int>(bucketCap));
-	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CanCrit() == false) //Crit banned check
+	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CanCrit() == false || ObservedCrit(pEvent, uNameHash) == true) //Crit banned check
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255,0,0,255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
 	}
