@@ -279,6 +279,7 @@ bool CCritHack::CanCrit()
 	int WeaponIndex = pWeapon->GetIndex(); 
 	if (!WeaponIndex) return false;
 
+	if (added_per_shot == 0.0f)
 	added_per_shot = static_cast<float>(pPlayerResource->GetDamage(WeaponIndex));
 	added_per_shot = Utils::ATTRIB_HOOK_FLOAT(added_per_shot, "mult_dmg", pWeapon, 0x0, true);
 
@@ -309,22 +310,30 @@ bool CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash)
 
 	if (pLocal && uNameHash == FNV1A::HashConst("player_hurt"))
 	{
-		float roundDamage = static_cast<float>(pPlayerResource->GetDamage(pLocal->GetIndex()));
-		float meleeDamage = static_cast<float>(pEvent->GetInt("damageamount"));
-		float cachedDamage = roundDamage - meleeDamage;
+		if (const auto pEntity = I::ClientEntityList->GetClientEntity(I::EngineClient->GetPlayerForUserID(pEvent->GetInt("userid"))))
+		{
+			if (pLocal != pEntity) return false;
 
-		if (cachedDamage == roundDamage)
-			return false;
+			float roundDamage = static_cast<float>(pPlayerResource->GetDamage(pLocal->GetIndex()));
+			float meleeDamage = static_cast<float>(pEvent->GetInt("damageamount"));
+			float cachedDamage = roundDamage - meleeDamage;
+			if (cachedDamage == roundDamage) return false;
 
-		DVariant blud;
-		float sentChance = blud.m_Float;
-		float critDamage = (3.0f * cachedDamage * sentChance) / (2.0f * sentChance + 1);
-
-		float normalizedDamage = critDamage / 3.0f;
-		if ((normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage))) >= NeededChance)
-			return true;
+			DVariant blud;
+			float sentChance = blud.m_Float;
+			float critDamage = (3.0f * cachedDamage * sentChance) / (2.0f * sentChance + 1);
+			float normalizedDamage = critDamage / 3.0f;
+			if ((normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage))) >= NeededChance)
+				return true;
+			
+			if (roundDamage >= 0.f)
+			{
+				meleeDamage = 0.f;
+				cachedDamage = 0.f;
+				critDamage = 0.f;
+			}
+		}
 	}
-
 	return false;
 }
 
