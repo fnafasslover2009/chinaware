@@ -280,6 +280,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <!-- <ClCompile Include="TeamFortress2\Features\Backtrack\Backtrack.cpp" /> -->
+    <ClCompile Include="TeamFortress2\Features\Aimbot\AimbotProjectileTemp\ProjectileAimbot.cpp" />
     <ClCompile Include="TeamFortress2\Features\Aimbot\MovementSimulation\MovementSimulation.cpp" />
     <ClCompile Include="TeamFortress2\Features\AntiHack\CheaterDetection\CheaterDetection.cpp" />
     <ClCompile Include="TeamFortress2\Features\AntiHack\FakeLag\FakeLag.cpp" />
@@ -444,6 +445,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- <ClInclude Include="TeamFortress2\Features\Backtrack\Backtrack.h" /> -->
+    <ClInclude Include="TeamFortress2\Features\Aimbot\AimbotProjectileTemp\ProjectileAimbot.h" />
     <ClInclude Include="TeamFortress2\Features\AutoQueue\AutoQueue.h" />
     <ClInclude Include="TeamFortress2\Features\Auto\AutoVaccinator\AutoVaccinator.h" />
     <ClInclude Include="TeamFortress2\Features\Commands\Commands.h" />

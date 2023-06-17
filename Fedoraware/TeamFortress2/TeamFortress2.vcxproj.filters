@@ -162,6 +162,7 @@
     <ClCompile Include="TeamFortress2\Features\ESP\GetWeaponName\GetWeaponName.cpp" />
     <ClCompile Include="TeamFortress2\Features\Auto\AutoVaccinator\AutoVaccinator.cpp" />
     <ClCompile Include="TeamFortress2\SDK\Includes\Classes.cpp" />
+    <ClCompile Include="TeamFortress2\Features\Aimbot\AimbotProjectileTemp\ProjectileAimbot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TeamFortress2\Features\AutoQueue\AutoQueue.h" />
@@ -666,6 +667,7 @@
     <ClInclude Include="TeamFortress2\Features\ESP\LocalConditions\LocalConditions.h" />
     <ClInclude Include="TeamFortress2\Features\ESP\GetWeaponName\GetWeaponName.h" />
     <ClInclude Include="TeamFortress2\Features\Auto\AutoVaccinator\AutoVaccinator.h" />
+    <ClInclude Include="TeamFortress2\Features\Aimbot\AimbotProjectileTemp\ProjectileAimbot.h" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="TeamFortress2\SDK\DirectX\d3dx9.lib" />
