@@ -323,8 +323,9 @@ bool CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash)
 			float sentChance = blud.m_Float;
 			float critDamage = (3.0f * cachedDamage * sentChance) / (2.0f * sentChance + 1);
 			float normalizedDamage = critDamage / 3.0f;
-			if ((normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage))) >= NeededChance)
-				return true;
+			float newcritchance = normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage));
+			if (newcritchance >= NeededChance) return true;
+			if (pWeapon->CanFireRandomCriticalShot(newcritchance) == true) return false;
 			
 			if (roundDamage >= 0.f)
 			{
