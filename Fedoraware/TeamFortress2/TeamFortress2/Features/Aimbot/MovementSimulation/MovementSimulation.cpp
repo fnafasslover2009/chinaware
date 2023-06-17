@@ -129,10 +129,10 @@ bool CMovementSimulation::Initialize(CBaseEntity* pPlayer)
 			pPlayer->m_bInDuckJump() = false;
 		}
 
-		//if (pPlayer != g_EntityCache.GetLocal())
-		//{
-		//	pPlayer->m_hGroundEntity() = -1; //this is bs you don't need this
-		//} 
+		if (pPlayer != g_EntityCache.GetLocal())
+		{
+			pPlayer->m_hGroundEntity() = -1; //this is bs you don't need this
+		} 
 
 		pPlayer->m_flModelScale() -= 0.03125f; //fixes issues with corners
 
@@ -193,9 +193,9 @@ void CMovementSimulation::FillVelocities()
 				continue;
 			}
 
-			//if (G::ChokeMap[pEntity->GetIndex()]) {	//	dont recache the same angle for lagging players. WHY? JUST WHY
-			//	continue;
-			//}
+			if (G::ChokeMap[pEntity->GetIndex()]) {	//	dont recache the same angle for lagging players. WHY? JUST WHY
+				continue;
+			}
 
 			const Vec3 vVelocity = pEntity->GetVelocity();
 			m_Velocities[iEntIndex].push_front(vVelocity);
