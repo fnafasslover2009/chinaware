@@ -223,7 +223,7 @@ void CCritHack::Run(CUserCmd* pCmd)
 	if (!IsEnabled()) { return; }
 
 	const auto& pWeapon = g_EntityCache.GetWeapon();
-	if (!pWeapon || !pWeapon->CanFireCriticalShot(false)) { return; }
+	if (!pWeapon || !pWeapon->CanFireCriticalShot(false) || pWeapon->IsCritBoosted()) { return; }
 
 	CGameEvent* pEvent = nullptr;
 	const FNV1A_t uNameHash = 0;
@@ -233,7 +233,7 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
 	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
 	{
-		if (ShouldCrit() && (pWeapon->GetCritTokenBucket() >= 100) && CanCrit() == true && ObservedCrit(pEvent, uNameHash) == false)
+		if (ShouldCrit() && (pWeapon->GetCritTokenBucket() >= 100) && CanCrit() == true && CritBanned(pEvent, uNameHash) == false)
 		{
 			if (closestGoodTick < 0) { return; }
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
@@ -259,10 +259,9 @@ void CCritHack::Run(CUserCmd* pCmd)
 bool CCritHack::CanCrit()
 {
 	const auto pWeapon = g_EntityCache.GetWeapon();
-	if (!pWeapon)
-		return false;
+	if (!pWeapon) { return false; }
 
-	int CritCount = pWeapon->GetCrits() + 1;
+	int CritCount = pWeapon->GetCrits() + 1; // all of this is wrong
 	int CritAttempts = *reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(pWeapon) + 0xA60) + 1;
 
 	float flMultiply = 0.5f;
@@ -272,26 +271,23 @@ bool CCritHack::CanCrit()
 	float flToRemove = flMultiply * 3.0f;
 
 	CTFPlayerResource* pPlayerResource = g_EntityCache.GetPR();
-	if (!pPlayerResource)
-		return false;
-
-	float added_per_shot = 0.0f;
+	if (!pPlayerResource) { return false; }
+	
 	int WeaponIndex = pWeapon->GetIndex(); 
-	if (!WeaponIndex) return false;
+	if (!WeaponIndex) { return false; }
 
-	if (added_per_shot == 0.0f)
+    float added_per_shot;
 	added_per_shot = static_cast<float>(pPlayerResource->GetDamage(WeaponIndex));
 	added_per_shot = Utils::ATTRIB_HOOK_FLOAT(added_per_shot, "mult_dmg", pWeapon, 0x0, true);
 
 	float amount = added_per_shot * flToRemove;
-
-	if (amount > pWeapon->GetCritTokenBucket())
-		return false;
+	if (amount > pWeapon->GetCritTokenBucket()) { return false; }
+		
 
 	return true;
 }
 
-bool CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash)
+bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash)
 {
 	const auto& pLocal = g_EntityCache.GetLocal();
 	const auto pWeapon = g_EntityCache.GetWeapon();
@@ -312,27 +308,24 @@ bool CCritHack::ObservedCrit(CGameEvent* pEvent, const FNV1A_t uNameHash)
 	{
 		if (const auto pEntity = I::ClientEntityList->GetClientEntity(I::EngineClient->GetPlayerForUserID(pEvent->GetInt("userid"))))
 		{
-			if (pLocal != pEntity) return false;
+			if (pLocal != pEntity) { return true; }
 
 			float roundDamage = static_cast<float>(pPlayerResource->GetDamage(pLocal->GetIndex()));
 			float meleeDamage = static_cast<float>(pEvent->GetInt("damageamount"));
 			float cachedDamage = roundDamage - meleeDamage;
-			if (cachedDamage == roundDamage) return false;
-
+			if (cachedDamage == roundDamage) { return true; }
+				
 			DVariant blud;
 			float sentChance = blud.m_Float;
 			float critDamage = (3.0f * cachedDamage * sentChance) / (2.0f * sentChance + 1);
 			float normalizedDamage = critDamage / 3.0f;
 			float newcritchance = normalizedDamage / (normalizedDamage + static_cast<float>((cachedDamage - roundDamage) - critDamage));
-			if (newcritchance >= NeededChance) return true;
-			if (pWeapon->CanFireRandomCriticalShot(newcritchance) == true) return false;
+			if (newcritchance >= NeededChance) { return true; }
 			
 			if (roundDamage >= 0.f)
-			{
-				meleeDamage = 0.f;
-				cachedDamage = 0.f;
-				critDamage = 0.f;
-			}
+			critDamage = 0.0f;
+			meleeDamage = 0.0f;
+			cachedDamage = 0.0f;
 		}
 	}
 	return false;
@@ -378,9 +371,17 @@ void CCritHack::Draw()
 	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
 	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
 	const std::wstring bucketstr = L"Crit Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L" / " + std::to_wstring(static_cast<int>(bucketCap));
-	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CanCrit() == false || ObservedCrit(pEvent, uNameHash) == true) //Crit banned check
+	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CanCrit() == false || CritBanned(pEvent, uNameHash) == true) //Crit banned check
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255,0,0,255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
+		if (CanCrit() == false)
+		{
+			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 139,64,0,255 }, ALIGN_CENTERHORIZONTAL, L"Crit Too Expensive");
+		}
+		if (CritBanned(pEvent, uNameHash) == true)
+		{
+			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 139,64,0,255 }, ALIGN_CENTERHORIZONTAL, L"Observed Crit Too High");
+		}
 	}
 	if (NoRandomCrits(pWeapon) == false)
 	{

@@ -270,14 +270,9 @@ int CProjectileAimbot::GetTargetIndex() {
 Vec3 CProjectileAimbot::GetPoint(const int nHitbox)
 {
 	float flMult;
-	if (G::WeaponCanHeadShot) // really annoying to set this every game when playing huntsman
-	{
-		flMult = 0.98f;
-	}
-	else
-	{
-		flMult = 0.75f;
-	}
+	if (G::WeaponCanHeadShot) { flMult = 0.99f; }
+	else { flMult = 0.70; }
+
 	const Vec3 vMaxs = iTargetInfo.vMaxs * flMult;
 	const Vec3 vMins = iTargetInfo.vMins * flMult;
 	const Vec3 vPos = iTargetInfo.vAbsOrigin;
@@ -319,14 +314,9 @@ Vec3 CProjectileAimbot::GetPoint(const int nHitbox)
 
 bool CProjectileAimbot::IsTargetVisible() {
 	float flMult;
-	if (G::WeaponCanHeadShot) // really annoying to set this every game when playing huntsman
-	{
-		flMult = 0.98f;
-	}
-	else
-	{
-		flMult = 0.75f;
-	}
+	if (G::WeaponCanHeadShot) { flMult = 0.99f; }
+	else { flMult = 0.70; }
+
 	const Vec3 vMaxs = iTargetInfo.vMaxs * flMult;
 	const Vec3 vMins = iTargetInfo.vMins * flMult;
 	const Vec3 vPos = iTargetInfo.vAbsOrigin;

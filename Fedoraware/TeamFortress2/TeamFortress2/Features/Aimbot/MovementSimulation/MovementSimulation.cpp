@@ -232,10 +232,10 @@ bool CMovementSimulation::StrafePrediction()
 		const int iEntIndex = m_pPlayer->GetIndex();
 		const auto& mVelocityRecord = m_Velocities[iEntIndex];
 
-		if (static_cast<int>(mVelocityRecord.size()) < 24) { return false; }
+		if (static_cast<int>(mVelocityRecord.size()) < 20) { return false; }
 
-		const int iSamples = fmin(24, mVelocityRecord.size());
-		if (iSamples < 24) { return false; }
+		const int iSamples = fmax(20, mVelocityRecord.size());
+		if (iSamples < 20) { return false; }
 
 		flInitialYaw = m_MoveData.m_vecViewAngles.y;
 

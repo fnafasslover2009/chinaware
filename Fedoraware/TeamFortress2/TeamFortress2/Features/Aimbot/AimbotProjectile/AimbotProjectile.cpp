@@ -403,14 +403,8 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 	const bool bIsDucking = (pEntity->m_bDucked() || pEntity->m_fFlags() & FL_DUCKING);
 
 	float flBBoxScale;
-	if (G::WeaponCanHeadShot) // really annoying to set this every game when playing huntsman
-	{ 
-		flBBoxScale = 0.98f; 
-	}
-	else
-	{ 
-		flBBoxScale = 0.75f; 
-	}
+	if (G::WeaponCanHeadShot) { flBBoxScale = 0.99f; }
+	else { flBBoxScale = 0.70; }
 
 	const Vec3 vMaxs = I::GameMovement->GetPlayerMaxs(bIsDucking) * flBBoxScale;
 	const Vec3 vMins = Vec3(-vMaxs.x, -vMaxs.y, vMaxs.z - vMaxs.z * flBBoxScale);
@@ -448,7 +442,7 @@ std::optional<Vec3> CAimbotProjectile::GetAimPos(CBaseEntity* pLocal, CBaseEntit
 	for (const auto& vPoint : vPoints)
 	{
 		if (iTestPoints > 15) { break; }
-		if (static_cast<int>(vVisPoints.size()) >= 15) { break; }
+		if (static_cast<int>(vVisPoints.size()) >= 3) { break; }
 		if (!IsPointAllowed(iCurPoint))
 		{
 			iCurPoint++;
