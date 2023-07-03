@@ -950,6 +950,7 @@ bool CConfigManager::SaveVisual(const std::string& configName)
 		SAVE_VAR(Vars::ESP::Players::Conditions::LagComp);
 		SAVE_VAR(Vars::ESP::Players::Conditions::Ping);
 		SAVE_VAR(Vars::ESP::Players::Conditions::KD);
+		SAVE_VAR(Vars::ESP::Players::Conditions::Dormant);
 		SAVE_VAR(Vars::ESP::Players::HealthBar);
 		SAVE_VAR(Vars::ESP::Players::HealthBarStyle);
 		SAVE_VAR(Vars::ESP::Players::Box);
@@ -1290,6 +1291,7 @@ bool CConfigManager::LoadVisual(const std::string& configName)
 		LOAD_VAR(Vars::ESP::Players::Conditions::LagComp);
 		LOAD_VAR(Vars::ESP::Players::Conditions::Ping);
 		LOAD_VAR(Vars::ESP::Players::Conditions::KD);
+		LOAD_VAR(Vars::ESP::Players::Conditions::Dormant);
 		LOAD_VAR(Vars::ESP::Players::HealthBar);
 		LOAD_VAR(Vars::ESP::Players::HealthBarStyle);
 		LOAD_VAR(Vars::ESP::Players::Box);

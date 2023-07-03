@@ -179,20 +179,25 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	const auto& pWeapon = pLocal->GetActiveWeapon();
 	if (!pWeapon) { return; }
 
-	if (G::IsAttacking || IsAttacking(pCmd, pWeapon)/* || pCmd->buttons & IN_ATTACK*/)
+	if (G::IsAttacking || IsAttacking(pCmd, pWeapon) /*|| pCmd->buttons & IN_ATTACK*/)
 	{
 		return;
 	}
 
 	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
-	if (bRescanRequired)
+	if (bRescanRequired || pWeapon->IsCritBoosted())
 	{
 		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
 		CritTicks.clear();
 	}
 
-	//CritBucketBP = *reinterpret_cast<float*>(pWeapon + 0xA54);
+	if (CritTicks.size() >= 256)
+	{
+		return;
+	}
+
+	//float CritBucketBP = *reinterpret_cast<float*>(pWeapon + 0xA54);
 	ProtectData = true; //	stop shit that interferes with our crit bucket because it will BREAK it
 	const int seedBackup = MD5_PseudoRandom(pCmd->command_number) & MASK_SIGNED;
 	for (int i = 0; i < loops; i++)
@@ -226,7 +231,7 @@ void CCritHack::Run(CUserCmd* pCmd)
 	CGameEvent* pEvent = nullptr;
 	const FNV1A_t uNameHash = 0;
 
-	ScanForCrits(pCmd, 50); //	fill our vector slowly
+	ScanForCrits(pCmd, 50);
 
 	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
 	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
@@ -236,7 +241,10 @@ void CCritHack::Run(CUserCmd* pCmd)
 			if (closestGoodTick < 0) { return; }
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;//	trash poopy whatever who cares
-			I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1;
+			if (G::CurWeaponType != EWeaponType::MELEE) 
+			{
+				I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1;
+			}
 		}
 		else if (Vars::CritHack::AvoidRandom.Value) //	we don't want to crit
 		{
@@ -326,9 +334,21 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 					float flMultCritChance = Utils::ATTRIB_HOOK_FLOAT(crit_mult * chance, "mult_crit_chance", pWeapon, 0, 1);
 					float NeededChance = flMultCritChance + 0.1f;
 
+					// automatic weapons
+					if (pWeapon->IsRapidFire())
+					{
+						float flTotalCritChance = std::clamp(0.02f * crit_mult, 0.01f, 0.99f);
+						float flCritDuration = 2.0f;
+						float flNonCritDuration = (flCritDuration / flTotalCritChance) - flCritDuration;
+						float flStartCritChance = 1 / flNonCritDuration;
+						flMultCritChance = Utils::ATTRIB_HOOK_FLOAT(flStartCritChance, "mult_crit_chance", pWeapon, 0, 1);
+					}
+
 					if (niggachance >= NeededChance || pWeapon->GetObservedCritChance() >= NeededChance)
-					    CritTicks.clear();
-					    return true;
+					{
+						CritTicks.clear();
+						return true;
+					}
 				}
 			}
 		}
