@@ -185,7 +185,7 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 	}
 
 	const bool bRescanRequired = previousWeapon != pWeapon->GetIndex();
-	if (bRescanRequired || pWeapon->IsCritBoosted())
+	if (bRescanRequired)
 	{
 		startingNum = pCmd->command_number;
 		previousWeapon = pWeapon->GetIndex();
@@ -207,7 +207,21 @@ void CCritHack::ScanForCrits(const CUserCmd* pCmd, int loops)
 		*I::RandomSeed = MD5_PseudoRandom(cmdNum) & MASK_SIGNED;
 		if (pWeapon->WillCrit() || result)
 		{
-			CritTicks.push_back(cmdNum); //	store our wish command number for later reference
+			// Check if the command number is already in CritTicks
+			bool isNewCommand = true;
+			for (const auto& critTick : CritTicks)
+			{
+				if (critTick == cmdNum)
+				{
+					isNewCommand = false;
+					break;
+				}
+			}
+
+			if (isNewCommand)
+			{
+				CritTicks.push_back(cmdNum); //	store our wish command number for later reference
+			}
 		}
 	}
 	startingNum += loops;
@@ -236,12 +250,12 @@ void CCritHack::Run(CUserCmd* pCmd)
 	const int closestGoodTick = LastGoodCritTick(pCmd); //	retrieve our wish
 	if (IsAttacking(pCmd, pWeapon)) //	is it valid & should we even use it
 	{
-		if (ShouldCrit() && (pWeapon->GetCritTokenBucket() >= 100) && CritBanned(pEvent, uNameHash) == false)
+		if (ShouldCrit() && (pWeapon->GetCritTokenBucket() >= 100) && CritBanned(pEvent, uNameHash).critbanned == false)
 		{
 			if (closestGoodTick < 0) { return; }
 			pCmd->command_number = closestGoodTick; //	set our cmdnumber to our wish
 			pCmd->random_seed = MD5_PseudoRandom(closestGoodTick) & MASK_SIGNED;//	trash poopy whatever who cares
-			if (G::CurWeaponType != EWeaponType::MELEE) 
+			if (G::CurWeaponType != EWeaponType::MELEE && CritBanned(pEvent, uNameHash).critbanned == false)
 			{
 				I::EngineClient->GetNetChannelInfo()->m_nOutSequenceNr = closestGoodTick - 1;
 			}
@@ -262,15 +276,18 @@ void CCritHack::Run(CUserCmd* pCmd)
 	}
 }
 
-bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this is gay nd not work
+struct observedcrits
+{
+	bool critbanned;
+	int damagedone;
+};
+
+CCritHack::observedcrits CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this is gay nd not work
 {
 	const auto pWeapon = g_EntityCache.GetWeapon();
 	CTFPlayerResource* pPlayerResource = g_EntityCache.GetPR();
 
-	if (!I::EngineClient->IsConnected() || !I::EngineClient->IsInGame())
-	{
-		return true;
-	}
+	if (!I::EngineClient->IsConnected() || !I::EngineClient->IsInGame()) { return { true, 0 }; } // set these to true first
 
 	if (const auto pLocal = g_EntityCache.GetLocal())
 	{
@@ -290,7 +307,7 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 				static int rounddamage = 0;
 				static int rangeddamage = 0;
 
-				if (pEntity == pLocal) { return true; }
+				if (pEntity == pLocal) { return { true, 0 }; }
 
 				if (Attacker == pLocal->GetIndex() && Attacked != Attacker)
 				{
@@ -298,7 +315,7 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 					CClientEntityList blawg{};
 					const auto entity = blawg.GetClientEntity(Attacked);
 					if (entity == nullptr)
-						return true;
+						return { true, 0 };
 
 					rounddamage = static_cast<float>(pPlayerResource->GetDamage(pLocal->GetIndex()));
 
@@ -318,9 +335,6 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 							critdamage = (3.0f * rangeddamage * sentchance) / (2.0f * sentchance + 1);
 						}
 					}
-
-					float normalizeddamage = (float)critdamage / 3.0f;
-					float niggachance = normalizeddamage / (normalizeddamage + (float)((cacheddamage - rounddamage) - critdamage));
 			
 					// what we need to be at or lower to get a crit
 					float crit_mult = static_cast<float>(pWeapon->GetCritMult());
@@ -332,7 +346,6 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 					}
 
 					float flMultCritChance = Utils::ATTRIB_HOOK_FLOAT(crit_mult * chance, "mult_crit_chance", pWeapon, 0, 1);
-					float NeededChance = flMultCritChance + 0.1f;
 
 					// automatic weapons
 					if (pWeapon->IsRapidFire())
@@ -343,17 +356,26 @@ bool CCritHack::CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash) // this 
 						float flStartCritChance = 1 / flNonCritDuration;
 						flMultCritChance = Utils::ATTRIB_HOOK_FLOAT(flStartCritChance, "mult_crit_chance", pWeapon, 0, 1);
 					}
+					
+					float normalizeddamage = (float)critdamage / 3.0f;
+					float niggachance = normalizeddamage / (normalizeddamage + (float)((cacheddamage - rounddamage) - critdamage));
+					float NeededChance = flMultCritChance + 0.1f;
 
-					if (niggachance >= NeededChance || pWeapon->GetObservedCritChance() >= NeededChance)
-					{
+					if (niggachance >= NeededChance || pWeapon->GetObservedCritChance() >= NeededChance)	
+					{ 
 						CritTicks.clear();
-						return true;
+						return  { true, Damage };
 					}
 				}
 			}
 		}
 	}
-	return false;
+	return { false, Damage }; 
+}
+
+int CCritHack::potentialcrits(float damage)
+{
+
 }
 
 void CCritHack::Draw()
@@ -393,7 +415,7 @@ void CCritHack::Draw()
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 95, 95, 255 }, ALIGN_CENTERHORIZONTAL, L"No Random Crits");
 	}
-	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CritBanned(pEvent, uNameHash) == true) //Crit banned check
+	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CritBanned(pEvent, uNameHash).critbanned == true) //Crit banned check
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 0, 0, 255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
 	}

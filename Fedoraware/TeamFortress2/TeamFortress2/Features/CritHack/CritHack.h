@@ -7,15 +7,20 @@ private:
 	bool AreRandomCritsEnabled();
 	bool IsEnabled();
 	bool ShouldCrit();
-	bool CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash);
+	int potentialcrits(float damage);
 	bool NoRandomCrits(CBaseCombatWeapon* pWeapon);
 	//bool ShouldForceMelee(CBaseCombatWeapon* pWeapon);	//	compare distances between local & enemies, force crits if we are within swing range of enemy.
 	bool IsAttacking(const CUserCmd* pCmd, CBaseCombatWeapon* pWeapon);
 	void ScanForCrits(const CUserCmd* pCmd, int loops = 10);
 	int LastGoodCritTick(const CUserCmd* pCmd);
 	
-	//int DamageToNextCrit(CBaseCombatWeapon* pWeapon);	//	returns a positive value if we are crit banned
+	struct observedcrits
+	{
+		bool critbanned;
+		int damagedone;
+	};
 
+	observedcrits CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash);
 	std::vector<int> CritTicks{};
 
 	//	TODO: Create & Restore to & from this struct when scanning for crits.
