@@ -20,7 +20,7 @@ private:
 		int damagedone;
 	};
 
-	observedcrits CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash);
+	observedcrits CritBanned(CGameEvent* pEvent, const FNV1A_t uNameHash, CUserCmd* pCmd);
 	std::vector<int> CritTicks{};
 
 	//	TODO: Create & Restore to & from this struct when scanning for crits.
