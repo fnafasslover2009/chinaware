@@ -417,21 +417,29 @@ void CCritHack::Draw()
 			g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 0, 255, 0, 255 }, ALIGN_CENTERHORIZONTAL, "Forcing Crits");
 		}
 	}
-	if (NoRandomCrits(pWeapon) == true) //Can this weapon do random crits?
+	
+	bool canDoRandomCrits = NoRandomCrits(pWeapon);
+	bool isCritBanned = (CritTicks.size() == 0 && !canDoRandomCrits) || CritBanned(pEvent, uNameHash, pCmd).critbanned;
+	bool isCritBoosted = pLocal->IsCritBoosted();
+	const float bucketCap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap")->GetFloat();
+	std::wstring bucketstr = L"Crit Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L" / " + std::to_wstring(static_cast<int>(bucketCap));
+	if (canDoRandomCrits)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 95, 95, 255 }, ALIGN_CENTERHORIZONTAL, L"No Random Crits");
 	}
-	if ((CritTicks.size() == 0 && NoRandomCrits(pWeapon) == false) || CritBanned(pEvent, uNameHash, pCmd).critbanned == true) //Crit banned check
+	if (isCritBanned)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 255, 0, 0, 255 }, ALIGN_CENTERHORIZONTAL, L"Crit Banned");
 	}
-	static auto tf_weapon_criticals_bucket_cap = g_ConVars.FindVar("tf_weapon_criticals_bucket_cap");
-	const float bucketCap = tf_weapon_criticals_bucket_cap->GetFloat();
-	const std::wstring bucketstr = L"Crit Bucket: " + std::to_wstring(static_cast<int>(bucket)) + L" / " + std::to_wstring(static_cast<int>(bucketCap));
-	if (NoRandomCrits(pWeapon) == false)
+	if (isCritBoosted)
+	{
+		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 173, 216, 230, 255 }, ALIGN_CENTERHORIZONTAL, L"Crit Boosted");
+	}
+	if (!canDoRandomCrits && !isCritBoosted && (CritTicks.size() > 0 && canDoRandomCrits) || !isCritBanned)
 	{
 		g_Draw.String(FONT_INDICATORS, x, currentY += 15, { 181, 181, 181, 255 }, ALIGN_CENTERHORIZONTAL, bucketstr.c_str());
 	}
+
 	int w, h;
 	I::VGuiSurface->GetTextSize(g_Draw.m_vecFonts.at(FONT_INDICATORS).dwFont, bucketstr.c_str(), w, h);
 
